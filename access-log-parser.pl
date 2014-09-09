@@ -9,6 +9,12 @@ use Sort::Key::IPv4 qw(ipv4sort);;
 use Data::Dumper;
 use Geo::IP::PurePerl;
 use URI::Encode;
+my ($help, $nocolor);
+use Getopt::Long;
+GetOptions(
+	'h|help'		=>	\$help,
+	'nc|no-color'	=>	\$nocolor,
+);
 
 my ($clientip, $datestring, $request, $httpstatus, $ua);
 my @unmatched;
@@ -29,7 +35,11 @@ while (my $line = <LOG>) {
 }
 close LOG;
 
-print color "bold red"; print "=" x 72; print color "reset"; print "\n";
+if ($nocolor) {
+	print "=" x 72; print "\n";
+} else {
+	print color "bold red"; print "=" x 72; print color "reset"; print "\n";
+}
 
 my $gi = Geo::IP::PurePerl->new(GEOIP_STANDARD);
 foreach my $c ( ipv4sort keys %clients ) {
@@ -48,13 +58,29 @@ foreach my $c ( ipv4sort keys %clients ) {
 	my $cn = $gi->country_name_by_addr($c);
 	$countries{$cn}++;
 	if ((!defined($org)) || ($org eq "")) { $org = "NOT DEFINED"; }
-	print color 'green'; print "$c"; print color 'reset'; print "\t :: $country :: $cc :: "; print color 'yellow'; print "$cn"; print color 'reset';
+		if ($nocolor) {
+			print "$c \t :: $country :: $cc :: ";
+		} else {
+			print color 'green'; print "$c"; print color 'reset'; print "\t :: $country :: $cc :: "; print color 'yellow'; print "$cn"; print color 'reset';
+		}
 	if (length($cn) > 16) { 
-		print "\t:: "; print color 'cyan'; print "$org"; print color 'reset'; print color 'green'; print " ( ".join(" ", keys(%{$uaips{$c}}))." ) "; print color 'reset'; print "\n"; 
+		if ($nocolor) {
+			print "\t:: $org ( ".join(" ", keys(%{$uaips{$c}}))." ) \n";
+		} else {
+			print "\t:: "; print color 'cyan'; print "$org"; print color 'reset'; print color 'green'; print " ( ".join(" ", keys(%{$uaips{$c}}))." ) "; print color 'reset'; print "\n"; 
+		}
 	} elsif (length($cn) > 8) { 
-		print "\t\t:: "; print color 'cyan'; print "$org"; print color 'reset'; print color 'green'; print " ( ".join(" ", keys(%{$uaips{$c}}))." ) "; print color 'reset'; print "\n"; 
+		if ($nocolor) {
+			print "\t\t:: $org ( ".join(" ", keys(%{$uaips{$c}}))." ) \n";
+		} else {
+			print "\t\t:: "; print color 'cyan'; print "$org"; print color 'reset'; print color 'green'; print " ( ".join(" ", keys(%{$uaips{$c}}))." ) "; print color 'reset'; print "\n"; 
+		}
 	} else { 
-		print "\t\t\t:: "; print color 'cyan'; print "$org"; print color 'reset'; print color 'green'; print " ( ".join("", keys(%{$uaips{$c}}))." ) "; print color 'reset'; print "\n"; 
+		if ($nocolor) {
+			print "\t\t\t:: $org ( ".join(" ", keys(%{$uaips{$c}}))." ) \n";
+		} else {
+			print "\t\t\t:: "; print color 'cyan'; print "$org"; print color 'reset'; print color 'green'; print " ( ".join("", keys(%{$uaips{$c}}))." ) "; print color 'reset'; print "\n"; 
+		}
 	}
 	
 	my $uri = URI::Encode->new( { encode_reserved => 0 } );
@@ -62,11 +88,19 @@ foreach my $c ( ipv4sort keys %clients ) {
 		if ($req =~ /(?:GET|HEAD)\s*\/\s*/) { next; } 
 		if ($req =~ /\%[0-9a-fA-F][0-9a-fA-F]/) {
 			my $dcd = $uri->decode($req);
-			print color 'bold red'; print "\\_> $dcd\n"; print color 'reset'; 
+			if ($nocolor) {
+				print "\\_> $dcd\n";
+			} else {
+				print color 'bold red'; print "\\_> $dcd\n"; print color 'reset'; 
+			}
 		} elsif ($req =~ /\\x[0-9a-fA-F][0-9a-fA-F]/) {
 			#$req =~ s/\\//g; $req =~ s/x//g;
 			$req =~ s{\\x(..)}{chr hex $1}eg;
-			print color 'bold red'; print "\\_> $req\n"; print color 'reset';
+			if ($nocolor) {
+				print "\\_> $req\n";
+			} else {
+				print color 'bold red'; print "\\_> $req\n"; print color 'reset';
+			}
 		} else {
 			print "\\_> $req\n";
 		}
@@ -84,8 +118,16 @@ foreach my $c ( ipv4sort keys %clients ) {
 	}				
 }
 
-print color 'bold red'; print scalar(@unmatched)." unmatched lines.\n"; print color 'reset';
+if ($nocolor) {
+	print scalar(@unmatched)." unmatched lines.\n";
+} else {
+	print color 'bold red'; print scalar(@unmatched)." unmatched lines.\n"; print color 'reset';
+}
 foreach my $line ( @unmatched ) {
 	chomp($line);
-	print color 'bold white on_blue'; print $line; print color 'reset'; print "\n";
+	if ($nocolor) {
+		print $line;
+	} else {
+		print color 'bold white on_blue'; print $line; print color 'reset'; print "\n";
+	}
 }
