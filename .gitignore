@@ -1,3 +1,5 @@
 sqlite-meta.rb
 apache-countries.pl
 open-relay/
+oldscripts.tar.xz
+.access-log-parser.rb
