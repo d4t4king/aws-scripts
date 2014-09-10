@@ -19,7 +19,7 @@ GetOptions(
 my ($clientip, $datestring, $request, $httpstatus, $ua);
 my @unmatched;
 my (%clients, %countries, %requests, %requestips, %uaips);
-open LOG, "</var/log/nginx/access.log.1" or die "Couldn't open access.log: $! \n";
+open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
 while (my $line = <LOG>) {
 	chomp($line);
 	if ($line =~ /((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*\-\s*.*?\s*\[(.*?)\]\s*\"(.*?)\"\s*(\d+)\s*\d+\s*\".*?\"\s*\"(.*?)\"/) {
@@ -110,10 +110,12 @@ foreach my $c ( ipv4sort keys %clients ) {
 	foreach my $ua ( keys %{$uaips{$c}} ) {
 		given ($ua) {
 			when (/ZmEu/) {
-				print "BLOCK (ZmEu):  $c -> $ua \'iptables -I INPUT -s $c -j DROP\'\n";
+				print "BLOCK (ZmEu):  $c -> $ua \'iptables -I INPUT 1 -s $c -j DROP\'\n";
+				&add_ipt_block($c);
 			}
 			when (/masss?can/) {
-				print "BLOCK (masscan):  $c -> $ua \'iptables -I INPUT -s $c -j DROP\'\n";
+				print "BLOCK (masscan):  $c -> $ua \'iptables -I INPUT 1 -s $c -j DROP\'\n";
+				&add_ipt_block($c);
 			}
 		}
 	}				
@@ -131,4 +133,22 @@ foreach my $line ( @unmatched ) {
 	} else {
 		print color 'bold white on_blue'; print $line; print color 'reset'; print "\n";
 	}
+}
+
+sub add_ipt_block($) {
+	my $ip = shift(@_);
+	
+	my @iptables = `iptables -L INPUT --line-numbers`;
+	foreach my $line (@iptables) {
+		chomp($line);
+		if ($line =~ /$ip/) {
+			# rule already exists
+			return 0;
+		}
+	}
+
+	#system('iptables -D INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables-denied: "');
+	system("iptables -I INPUT 1 -s $ip -j DROP");
+	#system('iptables -A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables-denied: "');
+	return 1;	#1 indicates rule added
 }

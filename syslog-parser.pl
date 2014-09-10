@@ -17,9 +17,9 @@ while (my $sl = $parser->next) {
 			if ($sl->{'text'} =~ /(?:Connection timed out|Network is unreachable)/) {
 				#do nothing;
 			} else {
-				if ($sl->{'text'} =~ /to=<(.*)>, orig_to=(.*), relay=(.*?)\s*/) {
+				if ($sl->{'text'} =~ /to=<(.*)>, orig_to=<?(.*?)>?, relay=(.*?),\s*/) {
 					$to_mails{$1}{$2}++; $relays{$3}++;
-				} elsif ($sl->{'text'} =~ /to=<(.*)>, relay=(.*?)\s*/) {
+				} elsif ($sl->{'text'} =~ /to=<(.*)>, relay=(.*?),\s*/) {
 					$to_mails{$1}{'none'}++; $relays{$2}++;
 				} else {
 					print "$sl->{'program'}: $sl->{'text'}\n";
@@ -28,7 +28,9 @@ while (my $sl = $parser->next) {
 		}
 		when (/kernel/) { 
 			if ($sl->{'text'} =~ /iptables-denied:/) {
-				print localtime($sl->{'timestamp'})." $sl->{'host'} $sl->{'program'} $sl->{'pid'} $sl->{'text'}\n";
+				open FILE, ">>/var/log/parsed-iptables" or die "Couldn't open iptables file for writing: $! \n";
+				print FILE localtime($sl->{'timestamp'})." $sl->{'host'} $sl->{'program'} $sl->{'text'}\n";
+				close FILE;
 			}
 		}
 		when (/ntpdate/) { }
