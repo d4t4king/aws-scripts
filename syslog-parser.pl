@@ -28,7 +28,7 @@ while (my $sl = $parser->next) {
 		}
 		when (/kernel/) { 
 			if ($sl->{'text'} =~ /iptables-denied:/) {
-				open FILE, ">>/var/log/parsed-iptables" or die "Couldn't open iptables file for writing: $! \n";
+				open FILE, ">/var/log/parsed-iptables" or die "Couldn't open iptables file for writing: $! \n";
 				print FILE localtime($sl->{'timestamp'})." $sl->{'host'} $sl->{'program'} $sl->{'text'}\n";
 				close FILE;
 			}

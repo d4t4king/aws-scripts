@@ -29,9 +29,16 @@ foreach my $line ( @data ) {
 	$dbdata{$dbua} = $hc;
 }
 
+# update the user-agents we already know about
 foreach my $dbua (keys %dbdata) {
 	if (exists($uas{$dbua})) {
 		my $cnt = $uas{$dbua} + $dbdata{$dbua};
 		system("$sqlite $db \"update useragents set hitcount='$cnt' where uas='$dbua'\"");
+		delete($uas{$dbua});
 	}
+}
+
+# insert whatever is left
+foreach my $ua ( keys %uas ) {
+	system("$sqlite $db \"insert into useragents values('$ua','','$uas{$ua}')\"");
 }
