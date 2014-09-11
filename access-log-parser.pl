@@ -30,6 +30,14 @@ while (my $line = <LOG>) {
 		$requestips{$clientip}{$request}++;
 		$uaips{$clientip}{$ua}++;
 		#$uas{$ua}++;
+	} elsif (/((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*(.)\s*(.)\s*\[(\d\d?\/.*\d{4}\:\d\d?\:\d\d?:\d\d?\s*\+\d+)\]\s*\"(.*)\"\s*(\d{3})\s(\d+)\s\"(.*)\"\s*\"(.*)\"\s*\"(.*)\"/ms) {
+		$clientip = $1; $datestring = $3; $request = $4; $httpstatus = $5; $ua = $8;
+		#print "$clientip | $request | $httpstatus\n";
+		$clients{$clientip}++;
+		$requests{$request}{$clientip}++;
+		$requestips{$clientip}{$request}++;
+		$uaips{$clientip}{$ua}++;
+		#$uas{$ua}++;
 	} else {
 		push @unmatched, $line;
 	}

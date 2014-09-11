@@ -19,11 +19,48 @@ my $gip = Geo::IP::PurePerl->new(GEOIP_STANDARD);
 
 %dbips = &get_sqlite_data("select ip from ips");
 
+my $ip_rgx = qr/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/;
+my $ds_rgx = qr/\d\d?\/.*\d{4}\:\d\d?\:\d\d?:\d\d?\s*\+\d+/;
 open IN, "</var/log/nginx/access.log" or die "Couldn't open access log: $! \n";
 while (my $line = <IN>) {
-	if ($line =~ /((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*(.)\s*(.)\s*\[(\d\d?\/.*\d{4}\:\d\d?\:\d\d?:\d\d?\s*\+\d+)\]\s*\"(.*)\"\s*(\d{3})\s(\d+)\s\"(.*)\"\s*\"(.*)\"\s*\"(.*)\"/ms) {
+	if ($line =~ /($ip_rgx)\s*-\s*
+					(.*?)			#HTTP user
+					\s*\[($ds_rgx)\]\s*\"
+					(.*)\"\s*		#request
+					(\d{3})			#HTTP Code
+					\s*(\d+)		#bytes sent
+					\s*\"(.*)\"		#referrer
+					\s*\"(.*)\"		#useragent
+				/msx) {
 		#print "1=$1; 2=$2; 3=$3; 4=$4; 5=$5; 6=$6; 7=$7; 8=$8; 9=$9\n";
-		$ip = $1; $datestr = $4; $req = $5; $httpcode = $6; $bytes = $7; $ua = $9;
+		$ip = $1; $datestr = $3; $req = $4; $httpcode = $5; $bytes = $6; $ua = $8;
+		#print "Found: $ip, $ua, $httpcode, $req\n";
+		$uas{$ua}++; $ips{$ip}++;
+		#print "REQ: $req\n";
+		if ($req =~ /^(?:GET|HEAD) \/ HTTP\/1.[01]/) {
+			# do nothing
+		} elsif ($req =~ /^GET \/favicon\.ico/) {
+			# do nothing
+		} elsif ($req =~ /^GET \/clientaccesspolicy\.xml/ ) {
+			# do nothing
+		} elsif ($req =~ /^GET \/db\.php/) { 
+			# still do nothing
+		} elsif ($req =~ /^GET \/robots\.txt/) {
+			# nope
+		} elsif ($req =~ /^HEAD \/db\.php/) {
+			# uh, uh
+		} elsif ($req =~ /^(?:GET|HEAD) \/movies.php/) {
+			# nothing
+		} elsif (ipv4_in_network("161.209.0.0/16", $ip)) {
+			# skip
+		} elsif ($ip eq "66.27.87.243") {
+			#skip
+		} else {
+			$pmal{$ip} = $req;
+		}
+	} elsif($line =~ /((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*(.)\s*(.)\s*\[(\d\d?\/.*\d{4}\:\d\d?\:\d\d?:\d\d?\s*\+\d+)\]\s*\"(.*)\"\s*(\d{3})\s(\d+)\s\"(.*)\"\s*\"(.*)\"\s*\"(.*)\"/ms) {
+		#print "1=$1; 2=$2; 3=$3; 4=$4; 5=$5; 6=$6; 7=$7; 8=$8; 9=$9\n";
+		$ip = $1; $datestr = $3; $req = $4; $httpcode = $5; $bytes = $6; $ua = $7;
 		#print "Found: $ip, $ua, $httpcode, $req\n";
 		$uas{$ua}++; $ips{$ip}++;
 		#print "REQ: $req\n";
