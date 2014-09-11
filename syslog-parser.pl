@@ -55,7 +55,7 @@ while (my $sl = $parser->next) {
 					open OUT, ">lastip"; print OUT "$newip\n"; close OUT;
 				}
 				if ($newip ne $lastip) {
-					system("echo 'IP Changed.\nNew: $newip, Old: $lastip' | mail -s \"DHCP Address Changed: aws2.dataking.us\" -t charlie\@dataking.us");
+					system("echo 'IP Changed.\nNew: $newip, Old: $lastip' | mail -s \"DHCP Address Changed: aws2.dataking.us\" charlie\@dataking.us");
 				}
 			}
 		}
