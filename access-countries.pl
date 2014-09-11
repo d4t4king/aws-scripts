@@ -27,9 +27,9 @@ close IN;
 # exit 1;
 
 # update the database
-system("wget -y -O /tmp/GeoIP.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz > /dev/null 2>&1");
-system("gzip -d /tmp/GeoIP.dat.gz");
-system("cp -vf /tmp/GeoIP.dat /usr/local/share/GeoIP/");
+#system("wget -O /tmp/GeoIP.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz > /dev/null 2>&1");
+#system("gzip -d /tmp/GeoIP.dat.gz");
+#system("cp -vf /tmp/GeoIP.dat /usr/local/share/GeoIP/");
 
 
 open OMAIL, ">/tmp/$$.m" or die "Couldn't open file ($$.m) for writing: $! \n";
