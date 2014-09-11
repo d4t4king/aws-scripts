@@ -65,6 +65,6 @@ EOF
 
 close OMAIL;
 
-system("mail -t charles.heselton\@gmail.com -s \"IP Countries\" -a \"Content-Type: text/html\" < /tmp/$$.m");
+system("mail -s \"IP Countries: www.diegominpin.com\" -a \"Content-Type: text/html\" charles.heselton\@gmail.com < /tmp/$$.m");
 
 unlink("/tmp/$$.m");
