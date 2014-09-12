@@ -20,7 +20,7 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
-55 16 * * * /root/scripts/acclog.sh
+55 16 * * * /root/scripts/acclog
 0 17 * * * /usr/bin/perl -w /home/ubuntu/scripts/access-countries.pl
 # run access info
 5 17 * * 1 /usr/bin/perl -w /home/ubuntu/scripts/get-info.pl

@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+use IO::Zlib;
+
+my @alllines;
+my $dir = "/var/log/nginx";
+opendir(DIR, $dir) or die "Couldn't open log directory: $! \n";
+while (my $file = readdir(DIR)) {
+	chomp($file);
+	if ($file =~ /^access/) {
+		if ($file =~ /\.gz$/) {
+			my $fh = new IO::Zlib;
+			if ($fh->open("$dir/$file", "rb")) {
+				#print OUT <$fh>;
+				push @alllines, <$fh>;
+				$fh->close;
+			}
+		} else {
+			open FILE, "<$dir/$file" or die "Couldn't open log file: $! \n";
+			#print OUT <FILE>;
+			push @alllines, <FILE>;
+			close FILE;
+		}
+	}
+}
+closedir(DIR);
+
+my @outlines = &uniq(@alllines);
+open OUT, ">/tmp/access_log" or die "Couldn't open output file for writing: $! \n";
+print OUT join("\n",@outlines);
+close OUT;
+
+sub uniq {
+	my %seen;
+	grep !$seen{$_}++, @_;
+}
