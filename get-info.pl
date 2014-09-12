@@ -13,6 +13,8 @@ use Net::IPv4Addr qw( :all );
 my ($ip, $datestr, $req, $httpcode, $bytes, $ua);
 my (%uas, %ips, %pmal, %dbuas, %dbips);
 my (@unmatched);
+my $hostname = `hostname -f`;
+chomp($hostname);
 
 my $gip = Geo::IP::PurePerl->new(GEOIP_STANDARD);
 %dbuas = &get_sqlite_data("select ua from useragents");
@@ -102,7 +104,7 @@ foreach my $p (sort keys %pmal ) {
 	#my $scanned = &is_scanned($p);
 	#print STDERR "Scanned: $scanned\n";
 	#my $thr = threads->create(sub { system("nmap -A -T3 -sS -oA $p $p"); return $?; });
-	if (&is_scanned($p)) {
+	if (!&is_scanned($p)) {
 		system("sudo nmap -A -T3 -sS -Pn -oA nmap_arch/$p $p >/dev/null 2>&1 &");
 		&mark_scanned($p);
 	}

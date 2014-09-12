@@ -28,6 +28,8 @@ EOF
 if ($help) { &Usage(); }
 if ($table) { $nocolor=1; }
 
+my $hostname = `hostname -f`;
+chomp($hostname);
 my (%sources, %dests, %dpts, %spts, %flags, %protos, %packets);
 open FILE, "</var/log/parsed-iptables" or die "Couldn't open logfile: $! \n";
 while (my $line = <FILE>) {

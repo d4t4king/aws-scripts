@@ -9,6 +9,8 @@ use Data::Dumper;
 my $access = '/var/log/nginx/access.log';
 my (%ips,%ccs,%cns);
 my $gip = Geo::IP::PurePerl->new(GEOIP_STANDARD);
+my $hostname = `hostname -f`;
+chomp($hostname);
 
 open IN, "<$access" or die "Couldn't open access log: $! \n";
 while (my $line = <IN>) {
@@ -65,6 +67,6 @@ EOF
 
 close OMAIL;
 
-system("mail -s \"IP Countries: www.diegominpin.com\" -a \"Content-Type: text/html\" charles.heselton\@gmail.com < /tmp/$$.m");
+system("mail -s \"IP Countries: $hostname\" -a \"Content-Type: text/html\" charles.heselton\@gmail.com < /tmp/$$.m");
 
 unlink("/tmp/$$.m");
