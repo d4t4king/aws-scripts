@@ -6,21 +6,29 @@ use warnings;
 use Geo::IP::PurePerl;
 use Term::ANSIColor;
 use Getopt::Long;
-my ($help, $nocolor, $table);
+my ($help, $nocolor, $table, $automate, $noauto);
 GetOptions(
-	'h|help'		=>	\$help,
-	'nc|no-color'	=>	\$nocolor,
-	't|table'		=> \$table,
+	'h|help'			=>	\$help,
+	'nc|no-color'		=>	\$nocolor,
+	't|table'			=>	\$table,
+	'automate'			=>	\$automate,
+	'na|no-automate'	=>	\$noauto,
 );
 
 sub Usage() {
 	print <<EOF;
 
-$0 [-h] [-nc]
+$0 [-h] [-nc] [-t] [--automate]
 
 -h	|	--help			Displays this help message.
 -nc	|	--no-color		Turns off colorized text.
 -t	|	--table			Prints output in an HTML table.  Forces --no-color.
+		--automate		Automatically sets iptables rules based on certain 
+						conditions.  WARNING: This could lock you out of your
+						system temporarily, and requires a reboot to backout!
+-na	|	--no-automate	Completely skips automatic addition of iptables rules,
+						after parsing the output.  Ironically, this is good
+						for running automatically (via cron).
 
 EOF
 }
@@ -102,6 +110,41 @@ foreach my $d ( sort { $dpts{$b} <=> $dpts{$a} } keys %dpts ) {
 }
 if ($table) { print "</table>\n"; }
 
+if ($noauto) {
+	exit 0;
+} else {
+	if ($nocolor) {
+		print <<EOF;
+
+This script can automatically add iptables rules
+to you system's firewall.  Do you want to continue?
+(Yes [y] or No [n])?
+EOF
+	} else {
+		&printblue("\nThis script can automatically add iptables rules
+to you system's firewall.  Do you want to continue?
+(Yes [y] or No [n])?");
+	}
+
+	my $ans = readline();
+	chomp($ans);
+	if ($ans =~ /(?:[yY](?:es))?/) {
+		# proceed to the blocking
+	} else {
+		exit 0;
+	}
+}
+
+
+
+#######################################################################
+sub printblue($) {
+	my $l = shift(@_);
+	print color 'bold blue'; 
+	print "$l";
+	print color 'reset';
+	print "\n";
+}
 sub nprintgreen($) {
 	my $l = shift(@_);
 	print color 'bold green'; 
