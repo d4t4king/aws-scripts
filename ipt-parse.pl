@@ -128,8 +128,9 @@ to you system's firewall.  Do you want to continue?
 
 	my $ans = readline();
 	chomp($ans);
-	if ($ans =~ /(?:[yY](?:es))?/) {
+	if ($ans =~ /(?:[yY](?:es)?)/) {
 		# proceed to the blocking
+		use IPTables::ChainMgr;
 	} else {
 		exit 0;
 	}
