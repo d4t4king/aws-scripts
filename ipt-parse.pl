@@ -5,6 +5,8 @@ use warnings;
 
 use Geo::IP::PurePerl;
 use Term::ANSIColor;
+use Sort::Key::IPv4 qw(ipv4sort);
+use Net::IPv4Addr qw( :all );
 use Getopt::Long;
 my ($help, $nocolor, $table, $automate, $noauto);
 GetOptions(
@@ -28,7 +30,7 @@ $0 [-h] [-nc] [-t] [--automate]
 						system temporarily, and requires a reboot to backout!
 -na	|	--no-automate	Completely skips automatic addition of iptables rules,
 						after parsing the output.  Ironically, this is good
-						for running automatically (via cron).
+						for running automatic reporting (via cron).
 
 EOF
 }
@@ -113,38 +115,128 @@ if ($table) { print "</table>\n"; }
 if ($noauto) {
 	exit 0;
 } else {
-	if ($nocolor) {
-		print <<EOF;
+	my $src_ref = &source_net_count(keys %sources);
+	use IPTables::ChainMgr;
+	my %opts = (
+		iptables	=>	'/sbin/iptables',
+		iptout		=>	'/tmp/iptables.out',
+		ipterr		=>	'/tmp/iptables.err',
+		verbose		=>	0,
+		debug		=>	0,
+			### advanced options
+ 		'ipt_alarm' => 5,					### max seconds to wait for iptables execution.
+		'ipt_exec_style' => 'waitpid', 		### can be 'waitpid',
+											### 'system', or 'popen'.
+		'ipt_exec_sleep' => 1,				### add in time delay between execution of
+											### iptables commands (default is 0).
+	);
+	
+	our $ipt_obj = new IPTables::ChainMgr(%opts)
+			or die "[*] Could not acquire IPTables::ChainMgr object";
+
+	if ($automate) {
+		foreach my $pkt (keys %packets) {
+			# TCP: 122.225.109.220:42060 => 172.31.41.85:22 (SYN)
+			print "$pkt\n";
+			if ($pkt =~ /(?:UDP|TCP)\: (.*) \=\> /) {
+				my $src = $1;
+				$src =~ s/(.*)\:.*/$1/;
+				print "SRC-->  "; &nprintcyan($src); print "\n";
+				my ($o, $t, $tt, $f) = split(/\./, $src);
+				my $first_three = "$o.$t.$tt";
+				my ($rule_num, $rule_count) = $ipt_obj->find_ip_rule("$src", "0.0.0.0/0", "filter", "INPUT", "LOGNDROP", {});
+				if ($rule_num != 0) {
+					&printblue("Found $rule_num of $rule_count");
+				} else {
+					#print "Found source subnet $src_ref->{$first_three} times.\n";
+					&printyellow("Rule not found with source $src."); 
+					#readline();
+					print "Creating rule to block $src\n";
+					my ($rv, $out_ar, $errs_ar) = $ipt_obj->add_ip_rule("$src/32", "0.0.0.0/0", 1, "filter", "INPUT", "LOGNDROP", {});
+					&printgreen("$rv, ".join("|", @{$out_ar}).", ".join("|", @{$errs_ar}));
+				}
+			} else { &printred("Didn't match source IP."); }
+		}
+
+	} else {
+		if ($nocolor) {
+			print <<EOF;
 
 This script can automatically add iptables rules
 to you system's firewall.  Do you want to continue?
 (Yes [y] or No [n])?
 EOF
-	} else {
-		&printblue("\nThis script can automatically add iptables rules
+		} else {
+			&printblue("\nThis script can automatically add iptables rules
 to you system's firewall.  Do you want to continue?
 (Yes [y] or No [n])?");
-	}
+		}
 
-	my $ans = readline();
-	chomp($ans);
-	if ($ans =~ /(?:[yY](?:es)?)/) {
-		# proceed to the blocking
-		use IPTables::ChainMgr;
-	} else {
-		exit 0;
+		my $ans = readline();
+		chomp($ans);
+		if ($ans =~ /(?:[yY](?:es)?)/) {
+			# proceed to the blocking
+
+			foreach my $pkt (keys %packets) {
+				# TCP: 122.225.109.220:42060 => 172.31.41.85:22 (SYN)
+				print "$pkt\n";
+				if ($pkt =~ /(?:UDP|TCP)\: (.*) \=\> /) {
+					my $src = $1;
+					$src =~ s/(.*)\:.*/$1/;
+					print "SRC-->  "; &nprintcyan($src); print "\n";
+					my ($o, $t, $tt, $f) = split(/\./, $src);
+					my $first_three = "$o.$t.$tt";
+					my ($rule_num, $rule_count) = $ipt_obj->find_ip_rule("$src", "0.0.0.0/0", "filter", "INPUT", "LOGNDROP", {});
+					if ($rule_num != 0) {
+						&printblue("Found $rule_num of $rule_count");
+					} else {
+						#print "Found source subnet $src_ref->{$first_three} times.\n";
+						&printyellow("Rule not found with source $src."); 
+						#readline();
+						print "Create rule to block $src?\n";
+						$ans = readline();
+						chomp($ans);
+						if ($ans =~ /(?:[yY](?:es)?)/ || $ans eq "\n") {
+							my ($rv, $out_ar, $errs_ar) = $ipt_obj->add_ip_rule("$src/32", "0.0.0.0/0", 1, "filter", "INPUT", "LOGNDROP", {});
+							&printgreen("$rv, ".join("|", @{$out_ar}).", ".join("|", @{$errs_ar}));
+						}	
+					}
+				} else { &printred("Didn't match source IP."); }
+			}	
+		} else {
+			exit 0;
+		}
 	}
 }
 
 
 
 #######################################################################
+sub insert_ip_jump_rule($$$$) {
+	# IPChains::ChainMgr oject, ip, from_chain, to_chain
+	my ($ipt_obj, $ip, $from_chain, $to_chain) = @_;
+	my ($rv, $out_ar, $errs_ar) = $ipt_obj->run_ipt_cmd("/sbin/iptables -I $from_chain 1 -s $ip -j $to_chain");
+	return($rv, $out_ar, $errs_ar);
+}
+sub printyellow($) {
+	my $l = shift(@_);
+	print color 'yellow'; 
+	print "$l";
+	print color 'reset';
+	print "\n";
+}
 sub printblue($) {
 	my $l = shift(@_);
 	print color 'bold blue'; 
 	print "$l";
 	print color 'reset';
 	print "\n";
+}
+sub nprintcyan($) {
+	my $l = shift(@_);
+	print color 'bold cyan'; 
+	print "$l";
+	print color 'reset';
 }
 sub nprintgreen($) {
 	my $l = shift(@_);
@@ -166,3 +258,17 @@ sub printred($) {
 	print color 'reset';
 	print "\n";
 }
+
+sub source_net_count(@) {
+	my @srcs = @_;
+	my (%first, %second, %third, %fourth);
+	my @sorted = ipv4sort(@srcs);
+	foreach my $s ( @sorted ) {
+		my ($one, $two, $three, $four) = split(/\./, $s);
+		$first{$one}++; $second{"$one.$two"}++;
+		$third{"$one.$two.$three"}++;
+	}
+
+	return \%third;
+}
+
