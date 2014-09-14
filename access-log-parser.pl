@@ -119,11 +119,11 @@ foreach my $c ( ipv4sort keys %clients ) {
 		given ($ua) {
 			when (/ZmEu/) {
 				print "BLOCK (ZmEu):  $c -> $ua \'iptables -I INPUT 1 -s $c -j DROP\'\n";
-				&add_ipt_block($c);
+				#&add_ipt_block($c);
 			}
 			when (/masss?can/) {
 				print "BLOCK (masscan):  $c -> $ua \'iptables -I INPUT 1 -s $c -j DROP\'\n";
-				&add_ipt_block($c);
+				#&add_ipt_block($c);
 			}
 		}
 	}				
@@ -146,17 +146,45 @@ foreach my $line ( @unmatched ) {
 sub add_ipt_block($) {
 	my $ip = shift(@_);
 	
-	my @iptables = `iptables -L INPUT --line-numbers`;
-	foreach my $line (@iptables) {
-		chomp($line);
-		if ($line =~ /$ip/) {
-			# rule already exists
+	use IPTables::ChainMgr;
+	my %opts = (
+		'iptables'			=>	'/sbin/iptables',
+		'iptout'			=>	'/tmp/iptables.out',
+		'ipterr'			=>	'/tmp/iptables.err',
+		'debug'				=>	0,
+		'verbose'			=>	0,
+		## advanced options
+		'ipt_alarm'			=>	5,
+		'ipt_exec_style'	=>	'waitpid',
+		'ipt_exec_sleep'	=>	0,
+	);
+
+	my $ipt_obj = new IPTables::ChainMgr(%opts)
+		or die "[*] Could not acquire IPTables::ChainMgr object";
+	### check for the LOGNDROP chain
+	my ($rv, $out_arr, $errs_arr) = $ipt_obj->chain_exists('filter', 'LOGNDROP');
+	if ($rv) { print "LOGNDROP chain exists.\n"; }
+	else { $ipt_obj->create_chain('filter', 'LOGNDROP'); print "LOGNDROP chain created.\n"; }
+
+	### chek to see if an input rule already exists
+	($rv, $out_arr, $errs_arr) = $ipt_obj->find_ip_rule($ip, '0.0.0.0/0', 'filter', 'INPUT', 'LOGNDROP', {});
+	if ($rv) {
+		print "Rule exists.  Skipping.\n";
+		return 0;
+	} else {
+		### add the rule
+		if ($ip eq "66.27.87.243"      ||
+			$ip eq "54.201.84.16"      ||
+			$ip eq "54.68.91.48"       ||
+			$ip eq "50.112.189.69"     ||
+			$ip eq "54.68.176.135"     ||
+			$ip eq "54.191.148.250"    ||
+			ipv4_in_network("161.209.0.0", $ip)) {
+			print "Belligerently refusing to block $ip!\n";
 			return 0;
 		}
-	}
 
-	#system('iptables -D INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables-denied: "');
-	system("iptables -I INPUT 1 -s $ip -j DROP");
-	#system('iptables -A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables-denied: "');
-	return 1;	#1 indicates rule added
+		($rv, $out_arr, $errs_arr) = $ipt_obj->add_ip_rule($ip, '0.0.0.0/0', 1, 'filter', 'INPUT', 'LOGNDROP', {});
+		return $rv;
+	}
 }
