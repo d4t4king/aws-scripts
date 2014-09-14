@@ -9,6 +9,7 @@ use Sort::Key::IPv4 qw(ipv4sort);;
 use Data::Dumper;
 use Geo::IP::PurePerl;
 use URI::Encode;
+use Net::IPv4Addr qw( :all );
 my ($help, $nocolor);
 use Getopt::Long;
 GetOptions(
@@ -119,11 +120,11 @@ foreach my $c ( ipv4sort keys %clients ) {
 		given ($ua) {
 			when (/ZmEu/) {
 				print "BLOCK (ZmEu):  $c -> $ua \'iptables -I INPUT 1 -s $c -j DROP\'\n";
-				#&add_ipt_block($c);
+				&add_ipt_block($c);
 			}
 			when (/masss?can/) {
 				print "BLOCK (masscan):  $c -> $ua \'iptables -I INPUT 1 -s $c -j DROP\'\n";
-				#&add_ipt_block($c);
+				&add_ipt_block($c);
 			}
 		}
 	}				
