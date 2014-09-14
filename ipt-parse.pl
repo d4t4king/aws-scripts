@@ -7,6 +7,7 @@ use Geo::IP::PurePerl;
 use Term::ANSIColor;
 use Sort::Key::IPv4 qw(ipv4sort);
 use Net::IPv4Addr qw( :all );
+use Net::Nslookup;
 use Getopt::Long;
 my ($help, $nocolor, $table, $automate, $noauto);
 GetOptions(
@@ -134,6 +135,20 @@ if ($noauto) {
 	our $ipt_obj = new IPTables::ChainMgr(%opts)
 			or die "[*] Could not acquire IPTables::ChainMgr object";
 
+	### make sure out LOGNDROP chain is there
+	my ($rv, $out_arr, $errs_arr) = $ipt_obj->chain_exists('filter', 'LOGNDROP');
+	if ($rv) {
+		&printgreen("LOGNDROP chain exists.");
+	} else {
+		### create it!
+		$ipt_obj->create_chain('filter', 'LOGNDROP');
+		($rv, $out_arr, $errs_arr) = $ipt_obj->run_ipt_cmd('/sbin/iptables -A LOGNDROP -m limit --limit 5/min -j LOG --log-prefix "specific-deny: "');
+		if ($rv == 0) { &printred("There was a problem adding the LOG rule."); }
+		else { 
+			($rv, $out_arr, $errs_arr) = $ipt_obj->run_ipt_cmd('/sbin/iptables -A LOGNDROP -j DROP');
+			if ($rv == 0) { &printred("There was a problem adding the DROP rule."); }
+		}
+	}
 	if ($automate) {
 		foreach my $pkt (keys %packets) {
 			# TCP: 122.225.109.220:42060 => 172.31.41.85:22 (SYN)
@@ -151,6 +166,15 @@ if ($noauto) {
 					#print "Found source subnet $src_ref->{$first_three} times.\n";
 					&printyellow("Rule not found with source $src."); 
 					#readline();
+					if ($src eq "66.27.87.243"		||
+						$src eq "54.201.84.16"		||
+						$src eq "54.68.91.48"		||
+						$src eq "50.112.189.69"		||
+						$src eq "54.68.176.135"		||
+						$src eq "54.191.148.250"	||
+						ipv4_in_network("161.209.0.0", $src)) {
+						&printyellow("Belligerently refusing to block $src!");
+					}
 					print "Creating rule to block $src\n";
 					my ($rv, $out_ar, $errs_ar) = $ipt_obj->add_ip_rule("$src/32", "0.0.0.0/0", 1, "filter", "INPUT", "LOGNDROP", {});
 					&printgreen("$rv, ".join("|", @{$out_ar}).", ".join("|", @{$errs_ar}));
@@ -184,6 +208,8 @@ to you system's firewall.  Do you want to continue?
 					my $src = $1;
 					$src =~ s/(.*)\:.*/$1/;
 					print "SRC-->  "; &nprintcyan($src); print "\n";
+					my $name = nslookup('host' => $src, 'type' => "PTR");
+					if ($name eq "") { $name = "UNRESOLVED"; }
 					my ($o, $t, $tt, $f) = split(/\./, $src);
 					my $first_three = "$o.$t.$tt";
 					my ($rule_num, $rule_count) = $ipt_obj->find_ip_rule("$src", "0.0.0.0/0", "filter", "INPUT", "LOGNDROP", {});
@@ -194,6 +220,7 @@ to you system's firewall.  Do you want to continue?
 						&printyellow("Rule not found with source $src."); 
 						#readline();
 						print "Create rule to block $src?\n";
+						print "PTR -> $name\n";
 						$ans = readline();
 						chomp($ans);
 						if ($ans =~ /(?:[yY](?:es)?)/ || $ans eq "\n") {
