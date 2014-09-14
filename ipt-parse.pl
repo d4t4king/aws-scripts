@@ -174,6 +174,7 @@ if ($noauto) {
 						$src eq "54.191.148.250"	||
 						ipv4_in_network("161.209.0.0", $src)) {
 						&printyellow("Belligerently refusing to block $src!");
+						next;
 					}
 					print "Creating rule to block $src\n";
 					my ($rv, $out_ar, $errs_ar) = $ipt_obj->add_ip_rule("$src/32", "0.0.0.0/0", 1, "filter", "INPUT", "LOGNDROP", {});
@@ -219,6 +220,16 @@ to you system's firewall.  Do you want to continue?
 						#print "Found source subnet $src_ref->{$first_three} times.\n";
 						&printyellow("Rule not found with source $src."); 
 						#readline();
+						if ($src eq "66.27.87.243"		||
+							$src eq "54.201.84.16"		||
+							$src eq "54.68.91.48"		||
+							$src eq "50.112.189.69"		||
+							$src eq "54.68.176.135"		||
+							$src eq "54.191.148.250"	||
+							ipv4_in_network("161.209.0.0", $src)) {
+							&printyellow("Belligerently refusing to block $src!");
+							next;
+						}
 						print "Create rule to block $src?\n";
 						print "PTR -> $name\n";
 						$ans = readline();
