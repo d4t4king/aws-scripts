@@ -9,6 +9,10 @@ if [ $(id -u) != 0 ]; then
 	echo "This script must be run as root.\n";
 fi
 
+# update first, since lynis checks for that.
+apt-get update
+apt-get upgrade -y
+
 # some basic package configuration
  for F in `find / -type f -name "php.ini"`; do
 	echo -n "${F}" && sed -i -e 's/\(expose_php = \)On/\1Off/' -e 's/\(allow_url_fopen = \)On/\1Off/' $F
