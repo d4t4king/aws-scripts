@@ -22,5 +22,7 @@ sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc
 sed -i -e 's/\(UMASK.*\?\)022/\1027/' /etc/login.defs
 sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
 
+# update first
+apt-get update && apt-get upgrade -y
 # install some required packages
-apt-get install libpam-cracklib clamav aide apt-show-versions -s
+#apt-get install libpam-cracklib clamav aide apt-show-versions -y
