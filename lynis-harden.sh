@@ -5,6 +5,20 @@
 # be implemented and are ignored in the charlie.prf
 # lynis profile.
 
+sysctl_update() {
+	# accepts 2 options:
+	# 	sysctl key to be changed ($1)
+	# 	status ($2 -- on or off)
+	KEY=$1; STATUS=$2;
+	sysctl ${KEY}=${STATUS}
+	if [ $(grep "${KEY}" /etc/sysctl.conf) == 1 ]; then
+		echo "${KEY}=${STATUS}" >> /etc/sysctl.conf
+	else 
+		sed -i -e "s/\(${KEY}\) \?= \?/\1=${STATUS}/" /etc/sysctl.conf
+	fi
+}
+
+
 if [ $(id -u) != 0 ]; then
 	echo "This script must be run as root.\n";
 fi
@@ -25,4 +39,13 @@ sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
 # update first
 apt-get update && apt-get upgrade -y
 # install some required packages
-apt-get install libpam-cracklib clamav aide apt-show-versions -y
+apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter -y
+
+# sysctl options
+echo "# Additional hardening settings, based on Lynis audit." >> /etc/sysctl.conf
+sysctl_update(net.ipv6.conf.default.accept_redirects, 0)
+sysctl_update(net.ipv4.conf.all.accept_redirects, 0)
+sysctl_update(net.ipv4.conf.all.log_martians, 1)
+sysctl_update(net.ipv4.conf.all.send_redirects, 0)
+sysctl_update(net.ipv6.conf.all.accept_redirects, 0)
+sysctl_update(net.ipv6.conf.default.accept_redirects, 0)
