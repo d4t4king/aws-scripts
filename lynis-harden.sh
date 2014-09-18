@@ -6,16 +6,20 @@
 # lynis profile.
 
 sysctl_update() {
+#set -x
 	# accepts 2 options:
 	# 	sysctl key to be changed ($1)
 	# 	status ($2 -- on or off)
 	KEY=$1; STATUS=$2;
 	sysctl ${KEY}=${STATUS}
-	if [ $(grep "${KEY}" /etc/sysctl.conf) == 1 ]; then
+	grep "${KEY}" /etc/sysctl.conf > /dev/null
+	if [ $? == 1 ]; then
+		#KEY=$(echo "${KEY}" | awk -F= '{ print $1 }')
 		echo "${KEY}=${STATUS}" >> /etc/sysctl.conf
 	else 
 		sed -i -e "s/\(${KEY}\) \?= \?/\1=${STATUS}/" /etc/sysctl.conf
 	fi
+#set +x
 }
 
 
@@ -43,9 +47,9 @@ apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter -y
 
 # sysctl options
 echo "# Additional hardening settings, based on Lynis audit." >> /etc/sysctl.conf
-sysctl_update(net.ipv6.conf.default.accept_redirects, 0)
-sysctl_update(net.ipv4.conf.all.accept_redirects, 0)
-sysctl_update(net.ipv4.conf.all.log_martians, 1)
-sysctl_update(net.ipv4.conf.all.send_redirects, 0)
-sysctl_update(net.ipv6.conf.all.accept_redirects, 0)
-sysctl_update(net.ipv6.conf.default.accept_redirects, 0)
+sysctl_update "net.ipv6.conf.default.accept_redirects" "0"
+sysctl_update "net.ipv4.conf.all.accept_redirects" "0"
+sysctl_update "net.ipv4.conf.all.log_martians" "1"
+sysctl_update "net.ipv4.conf.all.send_redirects" "0"
+sysctl_update "net.ipv6.conf.all.accept_redirects" "0"
+sysctl_update "net.ipv6.conf.default.accept_redirects" "0"
