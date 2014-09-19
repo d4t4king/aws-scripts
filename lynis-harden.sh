@@ -21,4 +21,4 @@ sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
 # update first
 apt-get update && apt-get upgrade -y
 # install some required packages
-#apt-get install libpam-cracklib clamav aide apt-show-versions -y
+apt-get install libpam-cracklib clamav aide apt-show-versions -y
