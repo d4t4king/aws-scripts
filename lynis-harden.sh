@@ -43,13 +43,21 @@ sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
 # update first
 apt-get update && apt-get upgrade -y
 # install some required packages
-apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter -y
+apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
 
 # sysctl options
 echo "# Additional hardening settings, based on Lynis audit." >> /etc/sysctl.conf
+sysctl_update "kernel.core_uses_pid" "1"
+sysctl_update "kernel.sysrq" "0"
+sysctl_update "net.ipv4.conf.all.rp_filter" "1"
+sysctl_update "net.ipv4.conf.default.accept_redirects" "0"
 sysctl_update "net.ipv6.conf.default.accept_redirects" "0"
 sysctl_update "net.ipv4.conf.all.accept_redirects" "0"
 sysctl_update "net.ipv4.conf.all.log_martians" "1"
+sysctl_update "net.ipv4.conf.default.log_martians" "1"
 sysctl_update "net.ipv4.conf.all.send_redirects" "0"
 sysctl_update "net.ipv6.conf.all.accept_redirects" "0"
-sysctl_update "net.ipv6.conf.default.accept_redirects" "0"
+sysctl_update "net.ipv4.conf.default.accept_source_route" "0"
+sysctl_update "net.ipv4.tcp_syncookies" "1"
+sysctl_update "net.ipv4.tcp_timestamps" "0"
+
