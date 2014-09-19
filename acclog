@@ -15,13 +15,19 @@ while (my $file = readdir(DIR)) {
 			my $fh = new IO::Zlib;
 			if ($fh->open("$dir/$file", "rb")) {
 				#print OUT <$fh>;
-				push @alllines, <$fh>;
+				while (my $line = <$fh>) {
+					chomp($line);
+					push @alllines, $line;
+				}
 				$fh->close;
 			}
 		} else {
 			open FILE, "<$dir/$file" or die "Couldn't open log file: $! \n";
 			#print OUT <FILE>;
-			push @alllines, <FILE>;
+			while (my $line = <FILE>) {
+				chomp($line);
+				push @alllines, <FILE>;
+			}
 			close FILE;
 		}
 	}
