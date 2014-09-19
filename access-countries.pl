@@ -25,14 +25,18 @@ while (my $line = <IN>) {
 }
 close IN;
 
-# print Dumper(%ips);
-# exit 1;
-
 # update the database
 #system("wget -O /tmp/GeoIP.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz > /dev/null 2>&1");
 #system("gzip -d /tmp/GeoIP.dat.gz");
 #system("cp -vf /tmp/GeoIP.dat /usr/local/share/GeoIP/");
 
+my %records;
+my @results = `sqlite3 /www/db/countries.db 'select ip, hitcount from countries';`;
+foreach my $rec ( @results ) {
+	chomp($rec);
+	my ($dip, $dhc) = split(/\|/, $rec);
+	$records{$dip} = $dhc;
+}	
 
 open OMAIL, ">/tmp/$$.m" or die "Couldn't open file ($$.m) for writing: $! \n";
 print OMAIL <<EOF;
@@ -45,26 +49,20 @@ foreach my $c ( sort(keys(%ccs)) ) {
 	foreach my $ip ( keys(%{$ccs{$c}}) ) {
 		next if ((!defined($ip)) || ($ip eq ""));
 		print OMAIL "<tr><td>&nbsp;</td><td>$ip</td><td>$ccs{$c}{$ip}</td></tr>\n";
+		if (exists($records{$ip})) {
+			my $total = $ccs{$c}{$ip} + $records{$ip};
+			my $ec = system("sqlite3 /www/db/countries.db \"update countries set hitcount=$total where ip='$ip';\"");
+			print "===> $ec <===\n";
+		} else {
+			my $ec = system("sqlite3 /www/db/countries.db \"insert into countries (ip, country_code, country_name, hitcount) values( '$ip', '$c', '$cns{$c}', '$ccs{$c}{$ip}')\";");
+			print "===< $ec >===\n";
+		}
 	}
 }
 
 print OMAIL <<EOF;
 </table>
 EOF
-#<br /><br /><hr width="90%"/>
-#<table>
-#<tr><td><h3>IP</h3></td><td><h3>Country Code</h3></td></tr>
-#EOF
-
-#foreach my $aip ( sort(keys(%ips)) ) {
-#	my $cc = $gip->country_code_by_addr("$aip");
-#	print OMAIL "<tr><td>$aip</td><td>$cc</td></tr>";
-#}
-#print OMAIL <<EOF;
-#</table>
-#</body></html>
-#EOF
-
 close OMAIL;
 
 system("mail -s \"IP Countries: $hostname\" -a \"Content-Type: text/html\" charles.heselton\@gmail.com < /tmp/$$.m");
