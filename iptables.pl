@@ -65,11 +65,29 @@ foreach my $chain ( @chains ) {
 						$ipt_obj->run_ipt_cmd('/sbin/iptables -I LOGNDROP 1 -m limit --limit 5/min -j LOG --log-prefix "specific-deny: "');
 						push(@created_rules, '-I LOGNDROP 1 -m limit --limit 5/min -j LOG --log-prefix "specific-deny: "');
 					}
+				} elsif($chain eq 'fail2ban-ssh') {
+					($rv, $out_arr, $errs_arr) = $ipt_obj->run_ipt_cmd("/sbin/iptables -nvL $chain");
+					#print Dumper($out_arr);
+					my $found = 0;	# false
+					foreach my $l (@{$out_arr}) {
+						chomp($l);
+						given ($l) {
+							when (/Chain fail2ban-ssh \(\d+ references\)/) { next; }
+							when (/pkts bytes target     prot opt in     out     source               destination/) { next; }
+							when (/\s*\d+[kKmM]?\s*\d+[kKmM]? RETURN     all  --  \*      \*       0.0.0.0\/0            0.0.0.0\/0/) { next; }
+							default {
+							}
+						}
+					}
 				}
 			} else {	# create it
 				print "$chain not found.  Creating it.\n";
 				$ipt_obj->create_chain('filter', $chain);
 				push(@created_chains, "$chain");
+				$ipt_obj->run_ipt_cmd('/sbin/iptables -I LOGNDROP 1 -m limit --limit 5/min -j LOG --log-prefix "specific-deny: "');
+				push(@created_rules, '-I LOGNDROP 1 -m limit --limit 5/min -j LOG --log-prefix "specific-deny: "');
+				$ipt_obj->append_ip_rule('0.0.0.0/0', '0.0.0.0/0', 'filter', 'LOGNDROP', 'DROP', {});
+				push(@created_rules, '0.0.0.0/0, 0.0.0.0/0, 1, filter, LOGNDROP, DROP');
 			}
 		}
 		when (/monitorix_IN_/) {
