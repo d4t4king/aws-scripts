@@ -41,7 +41,7 @@ config:show_tool_tips:1:
 # (always ignores scan mode and will make sure the test is skipped)
 #
 # config:test_skip_always:AAAA-1234 BBBB-5678 CCCC-9012:
-config:test_skip_always:BOOT-5121 FILE-6332 NETW-2704 NETW-2705 FILE-6310 HRDN-7220 AUTH-9286 ACCT-9628 BANN-7126 BANN-7130 STRG-1840 ACCT-9626
+config:test_skip_always:BOOT-5121 FILE-6332 NETW-2704 NETW-2705 FILE-6310 HRDN-7220 AUTH-9286 ACCT-9628 BANN-7126 BANN-7130 STRG-1840 ACCT-9626 FIRE-4513 HTTP-6710 LOGG-2190
 
 # ** Define the role(s) of a machine **
 # Values: desktop|server (default: server)
