@@ -21,6 +21,17 @@ my %opts = (
 										### iptables commands (default is 0).
 );
 
+my %allowed_ports = (
+	'tcp|25'	=>	1,
+	'tcp|22'	=>	1,
+	'tcp|80'	=>	1,
+	'tcp|443'	=>	1,
+	'tcp|4444'	=>	1,
+	'tcp|8080'	=>	1,
+	'tcp|4505'	=>	1,
+	'tcp|4506'	=>	1,
+);
+
 my @existing_chains;
 my @created_chains;
 my @existing_rules;
@@ -38,6 +49,15 @@ push(@chains, 'LOGNDROP', 'fail2ban-ssh', 'monitorix_IN_');
 
 #print Dumper(@chains);
 #exit 1;
+
+print "Checking for allowed port rules...\n";
+foreach my $port ( sort keys %allowed_ports ) {
+	my ($proto, $prt) = split(/\|/, $port);
+	($rv, $num_rules) = $ipt_obj->find_ip_rule('0.0.0.0/0', '0.0.0.0/0', 'filter', 'INPUT', 'ACCEPT', { 'normalize' => 1, "protocol" => $proto, 'd_port' => $prt });
+	if ($rv) {
+		print "Found allowed port rule: $port\n";
+	}
+}
 
 foreach my $chain ( @chains ) {
 	given ($chain) {
@@ -76,8 +96,27 @@ foreach my $chain ( @chains ) {
 							when (/pkts bytes target     prot opt in     out     source               destination/) { next; }
 							when (/\s*\d+[kKmM]?\s*\d+[kKmM]? RETURN     all  --  \*      \*       0.0.0.0\/0            0.0.0.0\/0/) { next; }
 							default {
+								if (/REJECT/) { $found=1; }
 							}
 						}
+					}
+					if ($found) {
+						print "Found at least one fail2ban-ssh REJECT rule.  Ignoring for now.\n";
+					}
+					($rv, $out_arr, $errs_arr) = $ipt_obj->run_ipt_cmd("/sbin/iptables -nvL INPUT --line-numbers");
+					#print Dumper($out_arr);
+					$found = 0;	# false
+					my $pos = 0;
+					foreach my $l (@{$out_arr}) {
+						chomp($l);
+						if ($l =~ /(\d+)\s*\d+\s*\d+[kKmM]? fail2ban-ssh  tcp  --  \*      \*       0\.0\.0\.0\/0            0\.0\.0\.0\/0            multiport dports 22/) {
+							$found=1; $pos=$1;
+						}
+					}
+					if ($found) {
+						print "fail2ban-ssh jump rule exists in INPUT in position $pos.\n";
+					} else {
+						print "fail2ban-ssh jump rule not found in INPUT.\n";
 					}
 				}
 			} else {	# create it
