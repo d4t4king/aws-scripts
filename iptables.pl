@@ -142,8 +142,8 @@ foreach my $chain ( @chains ) {
 					my $pos = 0;
 					foreach my $l (@{$out_arr}) {
 						chomp($l);
-						if ($l =~ /(\d+)\s*\d+\s*\d+[kKmM]? fail2ban-ssh  tcp  --  \*      \*       0\.0\.0\.0\/0            0\.0\.0\.0\/0            multiport dports 22/) {
-							$found=1; $pos=$1;
+						if ($l =~ /(\d+)[kKmM]?\s*\d+\s*\d+[kKmM]? fail2ban-ssh  tcp  --  \*      \*       0\.0\.0\.0\/0            0\.0\.0\.0\/0            multiport dports 22/) {
+							$pos=$1; $found=1;
 						}
 					}
 					if ($found) {
@@ -242,6 +242,8 @@ foreach my $chain ( @chains ) {
 						push(@existing_rules, $prule);
 					} else {
 						&printred("monitorix INPUT rule $i NOT found.\n");
+						my $pos = $num_rules - 5;
+						($rv, $out_arr, $errs_arr) = $ipt_obj->add_ip_rule('0.0.0.0/0', '0.0.0.0/0', $pos, 'filter', 'INPUT', "$chain$i", { 'normalize'=>1, 'protocol'=>"$proto", 'd_port'=>"$pt", 's_port'=>'1024:65535', 'ctstate'=>'RELATED,ESTABLISHED' });
 					}
 					($rv, $num_rules) = $ipt_obj->find_ip_rule('0.0.0.0/0', '0.0.0.0/0', 'filter', 'OUTPUT', "$chain$i", { 'normalize'=>1, 'protocol'=>"$proto", 'd_port'=>'1024:65535', 's_port'=>"$pt", 'ctstate'=>'RELATED,ESTABLISHED'});
 					if ($rv) {
@@ -249,6 +251,8 @@ foreach my $chain ( @chains ) {
 						push(@existing_rules, $oprule);
 					} else {
 						&printred("monitorix OUTPUT rule $i NOT found.\n");
+						my $pos = $num_rules - 5;
+						($rv, $out_arr, $errs_arr) = $ipt_obj->add_ip_rule('0.0.0.0/0', '0.0.0.0/0', $pos, 'filter', 'OUTPUT', "$chain$i", { 'normalize'=>1, 'protocol'=>"$proto", 's_port'=>"$pt", 'd_port'=>'1024:65535', 'ctstate'=>'RELATED,ESTABLISHED'});
 					}
 				} else {
 					print "$chain$i not found.  Creating it.\n";
