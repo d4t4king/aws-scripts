@@ -127,3 +127,6 @@ sysctl_update "net.ipv6.conf.all.accept_redirects" "0"
 sysctl_update "net.ipv4.conf.default.accept_source_route" "0"
 sysctl_update "net.ipv4.tcp_syncookies" "1"
 sysctl_update "net.ipv4.tcp_timestamps" "0"
+
+echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue
+echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue.net
