@@ -22,6 +22,14 @@ sysctl_update() {
 #set +x
 }
 
+if [ -e /etc/gentoo-release -a ! -z /etc/gentoo-release ]; then
+	OS="gentoo"
+elif [ -e /etc/debian_version -a ! -z /etc/debian_version ]; then
+	OS="debian/ubuntu"
+else
+	OS="unknown"
+fi
+
 
 if [ $(id -u) != 0 ]; then
 	echo "This script must be run as root.\n";
@@ -29,21 +37,80 @@ fi
 
 # some basic package configuration
 # php.ini's
+echo "Finding and replacing values in php.ini's..."
 for F in `find / -type f -name "php.ini"`; do
 	echo -n "${F}" && sed -i -e 's/\(expose_php = \)On/\1Off/' -e 's/\(allow_url_fopen = \)On/\1Off/' $F
-	#echo -n "${F}" && sed -e 's/\(allow_url_fopen = \)On/\1Off/' $F
 done
 # postfix banner obfuscation
-sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+echo "Updating postfix config..."
+case $OS in 
+	"debian/ubuntu")
+		sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+		;;
+	"gentoo")
+		sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
+		;;
+	*)
+	;;
+esac
 /etc/init.d/postfix reload
+
 # default umasks
-sed -i -e 's/\(UMASK.*\?\)022/\1027/' /etc/login.defs
-sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
+echo "Setting default umasks..."
+case $OS in
+	"debian/ubuntu")
+		sed -i -e 's/\(UMASK.*\?\)022/\1027/' /etc/login.defs
+		sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
+		;;
+	"gentoo")
+		;;
+	*)
+		;;
+esac
 
 # update first
-apt-get update && apt-get upgrade -y
-# install some required packages
-apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
+case $OS in 
+	"debian/ubuntu")
+		apt-get update && apt-get upgrade -y
+		# install some required packages
+		apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
+		;;
+	"gentoo")
+		eix-sync
+		emerge -uDNav --with-bdeps=y world
+		#emerge -av libpam-cracklib clamav aide rkhunter acct
+		# go one by one and check if they're installed first
+		equery l cracklib > /dev/null
+		EXIT_STATUS=$?
+		if [ $EXIT_STATUS = 1 ]; then
+			# not installed
+			emerge -av cracklib
+		fi
+		equery l clamav >/dev/null
+		EXIT_STATUS=$?
+		if [ $EXIT_STATUS = 1 ]; then
+			# not installed
+			emerge -av clamav
+		fi
+		equery l aide > /dev/null
+		EXIT_STATUS=$?
+		if [ $EXIT_STATUS = 1 ]; then
+			emerge -av aide
+		fi
+		equery l rkhunter > /dev/null
+		EXIT_STATUS=$?
+		if [ $EXIT_STATUS = 1 ] ; then
+			emerge -av rkhunter
+		fi
+		equery l sys-process/acct > /dev/null
+		EXIT_STATUS=$?
+		if [ $EXIT_STATUS = 1 ]; then
+			emerge -av sys-process/acct
+		fi
+		;;
+	*)
+		;;
+esac
 
 # sysctl options
 echo "# Additional hardening settings, based on Lynis audit." >> /etc/sysctl.conf
