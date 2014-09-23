@@ -79,14 +79,15 @@ if ($rv) {
 	#($rv, $out_arr, $errs_arr) = $ipt_obj->run_ipt_cmd('/sbin/iptables -I INPUT '.($num_rules - 5).' -i lo -j ACCEPT');
 	push(@created_rules, '-A INPUT -i lo -j ACCEPT');
 }
-($rv, $out_arr, $errs_arr) = $ipt_obj->find_ip_rule('0.0.0.0/0', '0.0.0.0/0', 'filter', 'OUTPUT', 'ACCEPT', { 'out' => 'lo' });
+($rv, $num_rules) = $ipt_obj->find_ip_rule('0.0.0.0/0', '0.0.0.0/0', 'filter', 'OUTPUT', 'ACCEPT', { 'out' => 'lo' });
 if ($rv) {
 	&printgreen("OUTPUT lo rule found.\n");
 	push(@existing_rules, '-A OUTPUT -o lo -j ACCEPT');
 } else {
 	&printred("OUTPUT lo rule NOT found.\n");
 	&printcyan("Creating rule...\n");
-	($rv, $out_arr, $errs_arr) = $ipt_obj->add_ip_rule('0.0.0.0/0', '0.0.0.0/0', 'filter', 'OUTPUT', 'ACCEPT'. { 'out' => 'lo' });
+	my $pos = $num_rules - 5;
+	($rv, $out_arr, $errs_arr) = $ipt_obj->add_ip_rule('0.0.0.0/0', '0.0.0.0/0', 1, 'filter', 'OUTPUT', 'ACCEPT', { 'out' => 'lo' });
 	if ($rv) { &printgreen("success.\n"); }
 	push(@created_rules, '-A OUTPUT -o lo -j ACCEPT');
 }
