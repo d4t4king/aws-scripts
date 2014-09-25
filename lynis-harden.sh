@@ -63,12 +63,15 @@ case $OS in
 		sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
 		;;
 	"gentoo")
+		sed -i -e 's/^\(umask\) [0-9][0-9][0-9]/\1 027/' /etc/profile
+		sed -i -e 's/^\(UMASK\)\s*[0-9][0-9][0-9]/\1	027/' /etc/login.defs
 		;;
 	*)
 		;;
 esac
 
 # update first
+echo "Updating system and checking for hardening tools..."
 case $OS in 
 	"debian/ubuntu")
 		apt-get update && apt-get upgrade -y
@@ -85,27 +88,37 @@ case $OS in
 		if [ $EXIT_STATUS = 1 ]; then
 			# not installed
 			emerge -av cracklib
+		else
+			echo "cracklib installed..."
 		fi
 		equery l clamav >/dev/null
 		EXIT_STATUS=$?
 		if [ $EXIT_STATUS = 1 ]; then
 			# not installed
 			emerge -av clamav
+		else 
+			echo "clamav installed..."
 		fi
 		equery l aide > /dev/null
 		EXIT_STATUS=$?
 		if [ $EXIT_STATUS = 1 ]; then
 			emerge -av aide
+		else
+			echo "aide installed..."
 		fi
 		equery l rkhunter > /dev/null
 		EXIT_STATUS=$?
 		if [ $EXIT_STATUS = 1 ] ; then
 			emerge -av rkhunter
+		else
+			echo "rkhunter installed..."
 		fi
 		equery l sys-process/acct > /dev/null
 		EXIT_STATUS=$?
 		if [ $EXIT_STATUS = 1 ]; then
 			emerge -av sys-process/acct
+		else 
+			echo "acct installed..."
 		fi
 		;;
 	*)
@@ -113,6 +126,7 @@ case $OS in
 esac
 
 # sysctl options
+echo "Setting sysctl options..."
 echo "# Additional hardening settings, based on Lynis audit." >> /etc/sysctl.conf
 sysctl_update "kernel.core_uses_pid" "1"
 sysctl_update "kernel.sysrq" "0"
@@ -128,5 +142,19 @@ sysctl_update "net.ipv4.conf.default.accept_source_route" "0"
 sysctl_update "net.ipv4.tcp_syncookies" "1"
 sysctl_update "net.ipv4.tcp_timestamps" "0"
 
+echo "Adding keywords to banner files..."
 echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue
 echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue.net
+
+echo "Disabling firewire..."
+echo "blacklist ohci1394" > /etc/modprobe.d/blacklist-firewire.conf
+echo "blacklist sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+echo "blacklist dv1394" >> /etc/modprobe.d/blacklist-firewire.conf
+echo "blacklist raw1394" >> /etc/modprobe.d/blacklist-firewire.conf
+echo "blacklist video1394" >> /etc/modprobe.d/blacklist-firewire.conf
+echo "blacklist firewire-ohci" >> /etc/modprobe.d/blacklist-firewire.conf
+echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+
+echo "Disabling USB storage..."
+echo "install usb-storage /bin/true" >> /etc/modprobe.conf
+
