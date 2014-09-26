@@ -17,7 +17,18 @@ sysctl_update() {
 		#KEY=$(echo "${KEY}" | awk -F= '{ print $1 }')
 		echo "${KEY}=${STATUS}" >> /etc/sysctl.conf
 	else 
-		sed -i -e "s/\(${KEY}\) \?= \?/\1=${STATUS}/" /etc/sysctl.conf
+		case ${STATUS} in
+			1)
+				ONFF=0
+				;;
+			0)
+				ONFF=1
+				;;
+			*)
+				echo "Unexpected status. (${STATUS})"
+				;;
+		esac
+		sed -i -e "s/\("${KEY}"\) \?= \?"${ONFF}"/\1="${STATUS}"/" /etc/sysctl.conf
 	fi
 #set +x
 }
