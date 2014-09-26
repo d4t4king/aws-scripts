@@ -144,6 +144,7 @@ sysctl_update "net.ipv4.conf.default.accept_source_route" "0"
 sysctl_update "net.ipv4.tcp_syncookies" "1"
 sysctl_update "net.ipv4.tcp_timestamps" "0"
 
+echo "Adding keywords to banner files..."
 grep "access authorized legal" /etc/issue > /dev/null
 if [ ! $? -eq 0 ]; then
 	echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue
@@ -153,19 +154,22 @@ if [ ! $? -eq 0 ]; then
 	echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue.net
 fi
 
-echo "Adding keywords to banner files..."
-echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue
-echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue.net
+if [ -e /etc/modprobe.d/blacklist-firewire.conf -a ! -z /etc/modprobe.d/blacklist-firewire.conf ]; then
+	echo "Disabling firewire..."
+	echo "blacklist ohci1394" > /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist dv1394" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist raw1394" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist video1394" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist firewire-ohci" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+fi
 
-echo "Disabling firewire..."
-echo "blacklist ohci1394" > /etc/modprobe.d/blacklist-firewire.conf
-echo "blacklist sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
-echo "blacklist dv1394" >> /etc/modprobe.d/blacklist-firewire.conf
-echo "blacklist raw1394" >> /etc/modprobe.d/blacklist-firewire.conf
-echo "blacklist video1394" >> /etc/modprobe.d/blacklist-firewire.conf
-echo "blacklist firewire-ohci" >> /etc/modprobe.d/blacklist-firewire.conf
-echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+grep "install usb-storage /bin/true" /etc/modprobe.conf > /dev/null
+if [ ! $? -eq 0 ]; then
+	echo "Disabling USB storage..."
+	echo "install usb-storage /bin/true" >> /etc/modprobe.conf
+fi
 
-echo "Disabling USB storage..."
-echo "install usb-storage /bin/true" >> /etc/modprobe.conf
+echo "Script done."
 
