@@ -15,7 +15,7 @@
 
 [configuration]
 # Profile name, will be used as title/description
-config:profile_name:Charlie's Template:
+config:profile_name:Default Audit Template:
 
 # Number of seconds to pause between every test (0 is no pause)
 config:pause_between_tests:0:
@@ -34,19 +34,19 @@ config:show_tool_tips:1:
 # ** Scan type (how deep test has to be, light, normal or full) **
 #
 # config:test_scan_mode:light|normal|full:
-#config:test_scan:full:
 
 
 # ** Skip one or more specific tests **
 # (always ignores scan mode and will make sure the test is skipped)
 #
 # config:test_skip_always:AAAA-1234 BBBB-5678 CCCC-9012:
-config:test_skip_always: FILE-6332 NETW-2705 AUTH-9308 AUTH-9286 AUTH-9308 FILE-6310 BOOT-5122 ACCT-9628 ACCT-9626 HRDN-7220
+config:test_skip_always:BOOT-5121 AUTH-9308 NETW-2705 AUTH-9286 AUTH-9308 FILE-6310 FILE-6310 NETW-2705 ACCT-9626 ACCT-9628 TOOL-5002 
+
 
 # ** Define the role(s) of a machine **
 # Values: desktop|server (default: server)
 #
-config:machine_role:server:
+#config:machine_role:server:
 
 
 #################################################################################
@@ -58,7 +58,7 @@ config:machine_role:server:
 #################################################################################
 # plugin=security_malware
 # plugin=security_rootkit
-plugin=fileperms
+# plugin=fileperms
 plugin=control-panels
 plugin=docker
 plugin=file-integrity
@@ -122,7 +122,7 @@ sysctl:net.ipv4.conf.default.accept_source_route:0:1:Disable IP source routing:
 sysctl:net.ipv4.conf.default.log_martians:1:1:Log all packages for which the host does not have a path back to the source:
 sysctl:net.ipv4.icmp_echo_ignore_broadcasts:1:1:Ignore ICMP packets directed to broadcast address:
 sysctl:net.ipv4.icmp_ignore_bogus_error_responses:1:1:Ignore
-sysctl:net.ipv4.ip_forward:0:1:Do not forward traffic:
+#sysctl:net.ipv4.ip_forward:0:1:Do not forward traffic:
 sysctl:net.ipv4.tcp_syncookies:1:1:Use SYN cookies to prevent SYN attack:
 sysctl:net.ipv4.tcp_timestamps:0:1:Do not use TCP time stamps:
 sysctl:net.ipv6.conf.all.send_redirects:0:1:Disable/ignore ICMP routing redirects:
@@ -132,23 +132,23 @@ sysctl:net.ipv6.conf.default.accept_redirects:0:1:Disable/Ignore ICMP routing re
 sysctl:net.ipv6.conf.default.accept_source_route:0:1:Disable IP source routing: 
 
 [security]
-sysctl:kern.securelevel:1^2^3:1:FreeBSD security level:
-security.jail.jailed: 0
-security.jail.jail_max_af_ips: 255
-security.jail.mount_allowed: 0
-security.jail.chflags_allowed: 0
-security.jail.allow_raw_sockets: 0
-security.jail.enforce_statfs: 2
-security.jail.sysvipc_allowed: 0
-security.jail.socket_unixiproute_only: 1
-security.jail.set_hostname_allowed: 1
-security.bsd.suser_enabled: 1
-security.bsd.unprivileged_proc_debug: 1
-security.bsd.conservative_signals: 1
-security.bsd.unprivileged_read_msgbuf: 1
-security.bsd.hardlink_check_gid: 0
-security.bsd.hardlink_check_uid: 0
-security.bsd.unprivileged_get_quota: 0
+#sysctl:kern.securelevel:1^2^3:1:FreeBSD security level:
+#security.jail.jailed: 0
+#security.jail.jail_max_af_ips: 255
+#security.jail.mount_allowed: 0
+#security.jail.chflags_allowed: 0
+#security.jail.allow_raw_sockets: 0
+#security.jail.enforce_statfs: 2
+#security.jail.sysvipc_allowed: 0
+#security.jail.socket_unixiproute_only: 1
+#security.jail.set_hostname_allowed: 1
+#security.bsd.suser_enabled: 1
+#security.bsd.unprivileged_proc_debug: 1
+#security.bsd.conservative_signals: 1
+#security.bsd.unprivileged_read_msgbuf: 1
+#security.bsd.hardlink_check_gid: 0
+#security.bsd.hardlink_check_uid: 0
+#security.bsd.unprivileged_get_quota: 0
 
 
 
@@ -159,7 +159,7 @@ security.bsd.unprivileged_get_quota: 0
 #
 #################################################################################
 
-#apache:ServerTokens:Prod:
+apache:ServerTokens:Prod:
 
 
 #################################################################################
@@ -169,8 +169,8 @@ security.bsd.unprivileged_get_quota: 0
 #
 #################################################################################
 
-#openldap:slapd.conf:permissions:640-600:
-#openldap:slapd.conf:owner:ldap-root:
+openldap:slapd.conf:permissions:640-600:
+openldap:slapd.conf:owner:ldap-root:
 
 
 #################################################################################
@@ -221,9 +221,9 @@ ssl:certificates:/etc/pki /etc/ssl /usr/local/share/ca-certificates /var/www:
 #
 #################################################################################
 
-permfile:/etc/inetd.conf:rw-------:root:-:WARN:
-permfile:/etc/fstab:rw-r--r--:root:-:WARN:
-#permfile:/etc/lilo.conf:rw-------:root:-:WARN:
+#permfile:/etc/inetd.conf:rw-------:root:-:WARN:
+#permfile:/etc/fstab:rw-r--r--:root:-:WARN:
+permfile:/etc/lilo.conf:rw-------:root:-:WARN:
 
 
 #################################################################################
@@ -253,7 +253,7 @@ permdir:/root/.ssh:rwx------:root:-:WARN:
 #config:connections_max_wait_state:50:
 
 # Skip security repository check for Debian based systems
-config:debian_skip_security_repository:no:
+#config:debian_skip_security_repository:yes:
 
 # Debug mode (for debugging purposes, extra data logged to screen)
 #config:debug:yes:
@@ -271,14 +271,14 @@ config:debian_skip_security_repository:no:
 
 # Define if available NTP daemon is configured as a server or client on the network
 # values: server or client (default: client)
-config:ntpd_role:client:
+#config:ntpd_role:client:
 
 # Allow promiscuous interfaces
 #   <option>:<promiscuous interface name>:<description>:
 #if_promisc:pflog0:pf log daemon interface:
 
 # Skip Lynis upgrade availability test (default: no)
-config:skip_upgrade_test:yes:
+#config:skip_upgrade_test:yes:
 
 #################################################################################
 #

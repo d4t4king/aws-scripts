@@ -14,6 +14,12 @@ while (my $line = <IN>) {
 	chomp($line);
 	if ($line =~ /((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*\-\s*.*?\s*\[(.*?)\]\s*\"(.*?)\"\s*(\d+)\s*\d+\s*\".*?\"\s*\"(.*?)\"/) {
 		$ua = $5;
+		# FIX ME!!!
+		# Temporary fix for bash UA bug checking
+		#$ua =~ s/&//g;
+		#$ua =~ s#\/##g;
+		#$ua = quotemeta($ua);
+		if ($ua =~ /[&\\]/) { print STDERR "$ua\n"; next; }
 		$uas{$ua}++;
 	}
 }
