@@ -180,6 +180,7 @@ sub add_ipt_block($) {
 			$ip eq "50.112.189.69"     ||
 			$ip eq "54.68.176.135"     ||
 			$ip eq "54.191.148.250"    ||
+			$ip eq "54.69.1.206"       ||
 			ipv4_in_network("161.209.0.0", $ip)) {
 			print "Belligerently refusing to block $ip!\n";
 			return 0;
