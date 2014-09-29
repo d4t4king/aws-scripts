@@ -47,7 +47,11 @@ foreach my $r ( @iptables ) {
 
 print "Local excpetions (In template, NOT in local):\n";
 #print Dumper(%l_exc);
-foreach my $rule ( sort keys %l_exc ) { print "$rule\n"; }
+foreach my $rule ( sort keys %l_exc ) { 
+	# ignore chain policies that are passing/dropping packets
+	next if ($rule =~ /:INPUT DROP \[\d+\:\d+]/);
+	print "$rule\n"; 
+}
 print "Template exceptionsi (in local, NOT in template):\n";
 #print Dumper(%t_exc);
 foreach my $rule ( sort keys %t_exc ) { print "$rule\n"; }
