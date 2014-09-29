@@ -276,28 +276,47 @@ foreach my $r ( @existing_rules ) { print "$r\n"; }
 &printcyan("Created rules:\n");
 foreach my $r ( @created_rules ) { print "$r\n"; }
 
+&printyellow("Checking rule order...\n");
+my @dumpInputRules; my %dumpInputRules;
+($rv, $out_arr, $errs_arr) = $ipt_obj->run_ipt_cmd("/sbin/iptables -nvL INPUT --line-numbers");
+push @dumpInputRules, @{$out_arr};
+#print Dumper(@dumpInputRules);
+foreach my $line ( @dumpInputRules ) {
+	chomp($line);
+	next if ($line =~ /Chain INPUT \(policy (?:DROP|ACCEPT) /);
+	next if ($line =~ /num   pkts bytes target/);
+	$line =~ s/^\s*(\d+\s+\d+[kKmM]?\s+\d+[kKmM]?.*)/$1/;		# remove leading whitespace
+	if ($line =~ /^(\d+)\s+(\d+[kKmM]?.*)/) {
+		my $rule_no = $1; my $rule = $2;
+		&printgreen("Rule No: $rule_no Rule: $rule\n");
+	} else {
+		&printred("Didn't match line: $line\n");
+	}
+}
+
+
 #######################################################################
 sub printgreen($) {
-	my $line = shift(@_);
+	my $_line = shift(@_);
 	print color 'green';
-	print "$line";
+	print "$_line";
 	print color 'reset';
 }
 sub printcyan($) {
-	my $line = shift(@_);
+	my $_line = shift(@_);
 	print color 'cyan';
-	print "$line";
+	print "$_line";
 	print color 'reset';
 }
 sub printred($) {
-	my $line = shift(@_);
+	my $_line = shift(@_);
 	print color 'bold red';
-	print "$line";
+	print "$_line";
 	print color 'reset';
 }
 sub printyellow($) {
-	my $line = shift(@_);
+	my $_line = shift(@_);
 	print color 'yellow';
-	print "$line";
+	print "$_line";
 	print color 'reset';
 }
