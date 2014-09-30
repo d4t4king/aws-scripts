@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+use feature qw(switch);
 use Data::Dumper;
 
 my $sqlite = '/usr/bin/sqlite3';
@@ -67,15 +69,16 @@ foreach my $str ( sort @exist ) {
 	chomp($str);
 	my ($ua, $type, $hc) = split(/\|/, $str);
 	given ($ua) {
-		when (/bot/) { system("$sqlite $db \"insert into useragents values('$ua','bot','$uas{$ua}')\""); }
-		when (/\(\)\s*\{\s*\:\;\}/) { system("$sqlite $db \"insert into useragents values('$ua','shellshock','$uas{$ua}')\""); }
-		when (/Windows-Media-Player\/[0-9.]+/) { system("$sqlite $db \"insert into useragents values('$ua','media-player','$uas{$ua}')\"");	}
-		when (/^[wW]get/) { system("$sqlite $db \"insert into useragents values('$ua','automaton','$uas{$ua}')\""); }
-		when (/^(?:TrackBack.*|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"insert into useragents values('$ua','automaton','$uas{$ua}')\""); }
-		when (/(?:wispr|paros|brutusi|\\?.nasl|jBrowser-WAP)/) { system("$sqlite $db \"insert into useragents values('$ua','unknown','$uas{$ua}')\""); }
-		when (/^Nokia7650.*/) { system("$sqlite $db \"insert into useragents values('$ua','mobile','$uas{$ua}')\""); }
-		when (/webinspect/) { system("$sqlite $db \"insert into useragents values('$ua','scanner','$uas{$ua}')\""); }
+		when (/bot/) { system("$sqlite $db \"update useragents set type='bot' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/\(\)\s*\{\s*\:\;\}/) { system("$sqlite $db \"update useragents set type='shellshock' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/Windows-Media-Player\/[0-9.]+/) { system("$sqlite $db \"update useragents set type='media-player' where uas='$ua'\"");	if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^[wW]get/) { system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^(?:TrackBack.*|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/(?:wispr|paros|brutusi|\\?.nasl|jBrowser-WAP)/) { system("$sqlite $db \"update useragents set type='unknown' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Nokia7650.*/) { system("$sqlite $db \"update useragents set type='mobile' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/webinspect/) { system("$sqlite $db \"update useragents set type='scanner' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		# We don't want the default here, because the type is already blank
 		#default { system("$sqlite $db \"insert into useragents values('$ua','','$uas{$ua}')\""); }
 	}
+}
 	
