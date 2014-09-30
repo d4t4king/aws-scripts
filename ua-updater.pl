@@ -58,7 +58,7 @@ foreach my $ua ( keys %uas ) {
 		when (/^(?:TrackBack.*|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"insert into useragents values('$ua','automaton','$uas{$ua}')\""); }
 		when (/(?:wispr|paros|brutus|\\?.nasl|jBrowser-WAP)/) { system("$sqlite $db \"insert into useragents values('$ua','unknown','$uas{$ua}')\""); }
 		when (/^Nokia7650.*/) { system("$sqlite $db \"insert into useragents values('$ua','mobile','$uas{$ua}')\""); }
-		when (/(?:webinspect|w3af\.sourceforge\.net|Mozilla\/[0-9.]* \(Nikto\/[0-9.]*\)/) { system("$sqlite $db \"insert into useragents values('$ua','scanner','$uas{$ua}')\""); }
+		when (/(?:webinspect|w3af\.sourceforge\.net|Mozilla\/[0-9.]* \(Nikto\/[0-9.]*\))/) { system("$sqlite $db \"insert into useragents values('$ua','scanner','$uas{$ua}')\""); }
 		when (/^$/) { system("$sqlite $db \"insert into useragents values('$ua','unknown','$uas{$ua}')\""); }
 		default { system("$sqlite $db \"insert into useragents values('$ua','','$uas{$ua}')\""); }
 	}
