@@ -20,8 +20,8 @@ GetOptions(
 my ($clientip, $datestring, $request, $httpstatus, $ua);
 my @unmatched;
 my (%clients, %countries, %requests, %requestips, %uaips);
-#open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
-open LOG, "</tmp/access_log" or die "Couldn't open access.log: $! \n";
+open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
+#open LOG, "</tmp/access_log" or die "Couldn't open access.log: $! \n";
 while (my $line = <LOG>) {
 	chomp($line);
 	if ($line =~ /((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*\-\s*.*?\s*\[(.*?)\]\s*\"(.*?)\"\s*(\d+)\s*\d+\s*\".*?\"\s*\"(.*?)\"/) {
