@@ -47,5 +47,16 @@ foreach my $dbua (keys %dbdata) {
 
 # insert whatever is left
 foreach my $ua ( keys %uas ) {
-	system("$sqlite $db \"insert into useragents values('$ua','','$uas{$ua}')\"");
+	given ($ua) {
+		when (/bot/) {
+			system("$sqlite $db \"insert into useragents values('$ua','bot','$uas{$ua}')\"");
+		}
+		when (/\(\)\s*\{\s*\:\;\}/) {
+			system("$sqlite $db \"insert into useragents values('$ua','shellshock','$uas{$ua}')\"");
+		}
+		default {
+			system("$sqlite $db \"insert into useragents values('$ua','','$uas{$ua}')\"");
+		}
+	}
 }
+
