@@ -24,6 +24,7 @@ open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
 #open LOG, "</tmp/access_log" or die "Couldn't open access.log: $! \n";
 while (my $line = <LOG>) {
 	chomp($line);
+	next if ($line =~ /^$/);
 	if ($line =~ /((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*\-\s*.*?\s*\[(.*?)\]\s*\"(.*?)\"\s*(\d+)\s*\d+\s*\".*?\"\s*\"(.*?)\"/) {
 		$clientip = $1; $datestring = $2; $request = $3; $httpstatus = $4; $ua = $5;
 		#print "$clientip | $request | $httpstatus\n";

@@ -9,7 +9,8 @@ my $db = '/www/db/useragents';
 my ($ua);
 my (%uas, %dbdata);
 
-open IN, "</var/log/nginx/access.log" or die "Couldn't access /var/log/nginx/access.log: $! \n";
+#open IN, "</var/log/nginx/access.log" or die "Couldn't access /var/log/nginx/access.log: $! \n";
+open IN, "</tmp/access_log" or die "Couldn't access /var/log/nginx/access.log: $! \n";
 while (my $line = <IN>) {
 	chomp($line);
 	if ($line =~ /((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*\-\s*.*?\s*\[(.*?)\]\s*\"(.*?)\"\s*(\d+)\s*\d+\s*\".*?\"\s*\"(.*?)\"/) {

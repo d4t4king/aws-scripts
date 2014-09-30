@@ -39,7 +39,12 @@ open OUT, ">/tmp/access_log" or die "Couldn't open output file for writing: $! \
 print OUT join("\n",@outlines);
 close OUT;
 
-sub uniq {
+sub uniq(@) {
 	my %seen;
-	grep !$seen{$_}++, @_;
+	#grep !$seen{$_}++, @_;
+	foreach my $l ( sort @_ ) {
+		next if ($l =~ /^\s*$/);
+		$seen{$l}++;
+	}
+	return keys %seen
 }

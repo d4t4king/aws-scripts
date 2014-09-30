@@ -6,7 +6,8 @@ use warnings;
 use Geo::IP::PurePerl;
 use Data::Dumper;
 
-my $access = '/var/log/nginx/access.log';
+#my $access = '/var/log/nginx/access.log';
+my $access = '/tmp/access_log';
 my (%ips,%ccs,%cns);
 my $gip = Geo::IP::PurePerl->new(GEOIP_STANDARD);
 my $hostname = `hostname -f`;
@@ -15,6 +16,7 @@ chomp($hostname);
 open IN, "<$access" or die "Couldn't open access log: $! \n";
 while (my $line = <IN>) {
 	chomp($line);
+	next if ($line =~ /^$/);
 	my @fields = split(/\s+/, $line);
 	my $ip = $fields[0];
 	$ips{$ip}++;
