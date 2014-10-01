@@ -55,11 +55,12 @@ foreach my $ua ( keys %uas ) {
 		when (/\(\)\s*\{\s*\:\;\s*\}/) { system("$sqlite $db \"insert into useragents values('$ua','shellshock','$uas{$ua}')\""); }
 		when (/Windows-Media-Player\\\/?[0-9.]+/) { system("$sqlite $db \"insert into useragents values('$ua','media-player','$uas{$ua}')\"");	}
 		when (/^(?:[wW]get|[hH][Tt][Tt]rack)/) { system("$sqlite $db \"insert into useragents values('$ua','automaton','$uas{$ua}')\""); }
-		when (/^(?:TrackBack.*|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"insert into useragents values('$ua','automaton','$uas{$ua}')\""); }
+		when (/^(?:TrackBack.*?|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"insert into useragents values('$ua','automaton','$uas{$ua}')\""); }
 		when (/(?:wispr|paros|brutus|\\?.nasl|jBrowser-WAP)/) { system("$sqlite $db \"insert into useragents values('$ua','unknown','$uas{$ua}')\""); }
-		when (/^Nokia7650.*/) { system("$sqlite $db \"insert into useragents values('$ua','mobile','$uas{$ua}')\""); }
+		when (/^Nokia7650.*?/) { system("$sqlite $db \"insert into useragents values('$ua','mobile','$uas{$ua}')\""); }
 		when (/(?:webinspect|w3af\.sourceforge\.net|Mozilla\/[0-9.]* \(Nikto\/[0-9.]*\))/) { system("$sqlite $db \"insert into useragents values('$ua','scanner','$uas{$ua}')\""); }
 		when (/^$/) { system("$sqlite $db \"insert into useragents values('$ua','unknown','$uas{$ua}')\""); }
+		when (/^Mozilla.*?Windows.*?Gecko.*?\sFirefox.*?/) { system("$sqlite $db \"insert into useragents values('$ua','browser likely','$uas{$ua}')\""); }
 		default { system("$sqlite $db \"insert into useragents values('$ua','','$uas{$ua}')\""); }
 	}
 }
@@ -72,13 +73,22 @@ foreach my $str ( sort @exist ) {
 	given ($ua) {
 		when (/(?:bot|Mediapartners-Google)/) { system("$sqlite $db \"update useragents set type='bot' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		when (/\(\)\s*\{\s*\:\;\s*\}/) { system("$sqlite $db \"update useragents set type='shellshock' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
-		when (/Windows-Media-Player\\\/?[0-9.]+/) { system("$sqlite $db \"update useragents set type='media-player' where uas='$ua'\"");	if ($? ne 0) { print STDERR "UA=$ua\n"; } }
-		when (/^(?:[wW]get|[Hh][Tt][Tt]rack)/) { system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
-		when (/^(?:TrackBack.*|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/Windows-Media-Player\\?\/?[0-9.]+/) { system("$sqlite $db \"update useragents set type='media-player' where uas='$ua'\"");	if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^(?:[wW]get|[Hh][Tt][Tt]rack)|LWP\:\:Simple\/[0-9.]* libwww-perl\/[0-9.]*/) { system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^(?:TrackBack.*?|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		when (/(?:wispr|paros|brutus|\\?.nasl|jBrowser-WAP)/) { system("$sqlite $db \"update useragents set type='unknown' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
-		when (/^Nokia7650.*/) { system("$sqlite $db \"update useragents set type='mobile' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
-		when (/(?:webinspect|w3af\.sourceforge\.net|Mozilla\/[0-9.]* \(Nikto\/[0-9.]*\))/) { system("$sqlite $db \"update useragents set type='scanner' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Nokia7650.*?/) { system("$sqlite $db \"update useragents set type='mobile' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/(?:webinspect|w3af\.sourceforge\.net|Mozilla\/[0-9.]* \(Nikto\/?[0-9.]*\))/) { system("$sqlite $db \"update useragents set type='scanner' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		when (/^$/) { system("$sqlite $db \"update useragents set type='unknown' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Mozilla.*?Windows.*?Gecko.*?\sFirefox.*?/) { system("$sqlite $db \"update useragents set type='browser likely' where uas like '$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Mozilla.*?(?:iPad|iPhone).*?AppleWebKit.*?Gecko.*?\sMobile.*?\sSafari.*?/) { system("$sqlite $db \"update useragents set type='mobile' where uas like '$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Mozilla\/[0-9.]* \(PLAYSTATION \d+\; [0-9.]\)/) { system("$sqlite $db \"update useragents set type='mobile' where uas like '$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Mozilla.*?MSIE.*?Windows NT.*?/) { system("$sqlite $db \"update useragents set type='browser likely' where uas like '$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Lynx \(textmode\)/) { system("$sqlite $db \"update useragents set type='browser likely' where uas like '$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Mozilla.*?Linux.*?\s+Android.*?AppleWebKit.*?Mobile Safari.*?/) { system("$sqlite $db \"update useragents set type='mobile' where uas like '$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Mozilla.*?X11.*?Gecko.*? Firefox/) { system("$sqlite $db \"update useragents set type='browser likely' where uas like '$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^\-$/) { system("$sqlite $db \"update useragents set type='unknown' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/^Mozilla.*? Ask Jeeves.*/) { system("$sqlite $db \"update useragents set type='bot' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		# We don't want the default here, because the type is already blank
 		#default { system("$sqlite $db \"insert into useragents values('$ua','','$uas{$ua}')\""); }
 	}
