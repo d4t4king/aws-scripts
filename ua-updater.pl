@@ -106,15 +106,16 @@ foreach my $str ( sort @exist ) {
 	my ($ua, $type, $hc) = split(/\|/, $str);
 	given ($ua) {
 		when (/(?:[Bb]ot|Mediapartners-Google|apach0day)/) { system("$sqlite $db \"update useragents set type='bot' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
+		when (/ZmEu/) { system("$sqlite $db \"update useragents set type='malware' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		when (/(?:\(\)\s*\{\s*\:\;\s*\}|shellshock-scan)/) { system("$sqlite $db \"update useragents set type='shellshock' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		when (/Windows-Media-Player\\?\/?[0-9.]+/) { system("$sqlite $db \"update useragents set type='media-player' where uas='$ua'\"");	if ($? ne 0) { print STDERR "UA=$ua\n"; } }
-		when (/^(?:[wW]get|[Hh][Tt][Tt]rack)|LWP\:\:Simple\/[0-9.]* libwww-perl\/[0-9.]*/) { 
+		when (/^(?:[wW]get|[Hh][Tt][Tt]rack)|LWP\:\:Simple\/[0-9.]* libwww-perl\/[0-9.]*|Python-httplib2\/[0-9.]+ \(gzip\)/) { 
 			system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } 
 		}
 		when (/^(?:TrackBack.*?|java|curl|libwww-perl\/[0-9.])/) { system("$sqlite $db \"update useragents set type='automaton' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		when (/(?:wispr|paros|brutus|\\?.nasl|jBrowser-WAP)/) { system("$sqlite $db \"update useragents set type='unknown' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
 		when (/^Nokia7650.*?/) { system("$sqlite $db \"update useragents set type='mobile' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
-		when (/(?:webinspect|w3af\.sourceforge\.net|Mozilla\/?[0-9.]* \(Nikto\/?[0-9.]*\))/) { 
+		when (/(?:webinspect|w3af\.sourceforge\.net|Mozilla\/?[0-9.]* \(Nikto\/?[0-9.]*\)|masscan\/[0-9.]+)/) { 
 			system("$sqlite $db \"update useragents set type='scanner' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } 
 		}
 		when (/^$/) { system("$sqlite $db \"update useragents set type='unknown' where uas='$ua'\""); if ($? ne 0) { print STDERR "UA=$ua\n"; } }
