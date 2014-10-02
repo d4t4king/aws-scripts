@@ -42,6 +42,7 @@ while (my @row = $sth->fetchrow_array) {
 
 # loop through sqlite3 records and add as appropriate
 my $found = 0; my $total = 0; my $added = 0; my $updated = 0;
+my $errs = 0;
 foreach my $rec ( @sqlite_uas ) {
 	chomp($rec);
 	$total++;
@@ -53,13 +54,15 @@ foreach my $rec ( @sqlite_uas ) {
 		$sth->execute;
 		$updated++;
 	} else {
+		if ($ua =~ /java.in/) { print STDERR "Ignoring user-aget: $ua\n"; $errs++; next; }
 		my $sql = "INSERT INTO useragents2 VALUES (N'$ua', '$hitcount', '$type_ids{$type}');";
+		#print "SQL:  $sql\n";
 		$sth = $dbh->prepare($sql);
 		$sth->execute;
 		$added++;
 	}
 }
 
-print "Found $found out of $total.  Added: $added.\n";
+print "Found $found out of $total.  Added: $added.  Errors: $errs\n";
 
 $dbh->disconnect;
