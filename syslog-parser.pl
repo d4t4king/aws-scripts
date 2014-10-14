@@ -47,6 +47,10 @@ while (my $sl = $parser->next) {
 					# do nothing
 				} elsif ($sl->{'text'} =~ /warning: hostname/) {
 					# do nothing
+				} elsif ($sl->{'text'} =~ /warning: host aws1.dataking.us\[/) {
+					# do nothing
+				} elsif ($sl->{'text'} =~ /lost connection after (?:MAIL|CONNECT) from/) {
+					# do nothing 
 				} else {
 					print "$sl->{'program'}: $sl->{'text'}\n";
 				}
