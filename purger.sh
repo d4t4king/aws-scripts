@@ -1,6 +1,10 @@
 #!/bin/bash
 
-for P in `dpkg -l | grep "^rc" | awk '{ print $2 }'`; do
-	dpkg --purge ${P}
-done
+if [ `id` eq 0 ]; then
+	apt-get update && apt-get upgrade -y && apt-get autoremove -y
+
+	for P in `dpkg -l | grep "^rc" | awk '{ print $2 }'`; do
+		dpkg --purge ${P}
+	done
+fi
 
