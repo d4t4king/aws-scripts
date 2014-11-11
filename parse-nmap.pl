@@ -8,9 +8,17 @@ use Term::ANSIColor;
 use Data::Dumper;
 use Cwd;
 #use WWW::Mechanize;
+use Getopt::Long;
+
+my ($mirror, $xmldir);
+GetOptions(
+	'm|mirror'	=>	\$mirror,
+	'x|xmldir=s'	=>	\$xmldir,
+);
 
 my @scans;
 my $archdir = '/home/ubuntu/nmap_arch';
+if (($xmldir) && ($xmldir ne "")) { $archdir = $xmldir; }
 opendir(DIR, $archdir) or die "Couldn't open read directory: $! \n";
 while ( my $file = readdir(DIR) ) {
 	#print "$file\n";
@@ -26,17 +34,39 @@ while ( my $file = readdir(DIR) ) {
 		next if ($@);
 		#print Dumper($xml->{'host'});
 
-		$scaninfo{'status'}		=	$xml->{'host'}{'status'}{'state'};
-		$scaninfo{'addr'}		=	$xml->{'host'}{'address'}{'addr'};
-		$scaninfo{'addr_type'}	=	$xml->{'host'}{'address'}{'addrtype'};
-		$scaninfo{'starttime'}	=	$xml->{'host'}{'starttime'};
-		$scaninfo{'endtime'}	=	$xml->{'host'}{'endtime'};
-		$scaninfo{'hostname'}	=	$xml->{'host'}{'hostnames'}{'hostname'}{'name'};
-		$scaninfo{'distance'}	=	$xml->{'host'}{'distance'}{'value'};
-		if ((!defined($scaninfo{'hostname'})) || ($scaninfo{'hostname'} eq "")) { 
-			$scaninfo{'hostname'} = "unresolved"; 
+		if (ref($xml->{'host'}) eq "HASH") {
+			$scaninfo{'status'}		=	$xml->{'host'}{'status'}{'state'};
+			$scaninfo{'addr'}		=	$xml->{'host'}{'address'}{'addr'};
+			$scaninfo{'addr_type'}		=	$xml->{'host'}{'address'}{'addrtype'};
+			$scaninfo{'starttime'}		=	$xml->{'host'}{'starttime'};
+			$scaninfo{'endtime'}		=	$xml->{'host'}{'endtime'};
+			$scaninfo{'hostname'}		=	$xml->{'host'}{'hostnames'}{'hostname'}{'name'};
+			$scaninfo{'distance'}		=	$xml->{'host'}{'distance'}{'value'};
+			if ((!defined($scaninfo{'hostname'})) || ($scaninfo{'hostname'} eq "")) { 
+				$scaninfo{'hostname'} = "unresolved"; 
+			}
+		} elsif (ref($xml->{'host'}) eq "ARRAY") { 		# we have a list of hosts
+			foreach my $host ( @{$xml->{'host'}} ) {
+				#print Dumper($host);
+				my $ip = $host->{'address'}{'addr'};
+				$scaninfo{$ip}{'addr'} = $host->{'address'}{'addr'};
+				#print $host->{'address'}{'addr'}."\n";
+				$scaninfo{$ip}{'addr_type'} = $host->{'address'}{'addr_type'};
+				$scaninfo{$ip}{'status'} = $host->{'status'}{'state'};
+				$scaninfo{$ip}{'starttime'} = $host->{'starttime'};
+				$scaninfo{$ip}{'endtime'} = $host->{'endtime'};
+				$scaninfo{$ip}{'hostname'} = $host->{'hostnames'}{'hostname'}{'name'};
+				$scaninfo{$ip}{'distance'} = $host->{'distance'}{'value'};
+				if ((!defined($scaninfo{$ip}{'hostname'})) || ($scaninfo{$ip}{'hostname'} eq "")) {
+					$scaninfo{$ip}{'hostname'} = "unresolved";
+				}
+				#exit 1;
+			}
+		} else {
+			print colored("Unexpected data structure: ", "red");
+			print colored(ref($xml->{'host'}), "red");
+			print "\n";
 		}
-
 		#print Dumper($scaninfo{'hostname'});
 		foreach my $port ( sort keys %{$xml->{'host'}{'ports'}{'port'}} ) {
 			#print Dumper($port);
@@ -98,7 +128,7 @@ foreach my $scan ( @scans ) {
 		}
 	};
 	if ($@) { print "ERROR: $@\n"; }
-	# Have to unqrap the osmatch hash
+	# Have to unwrap the osmatch hash
 	my $osmatches;
 	foreach my $ref ( sort @{$scan->{'osmatch'}} ) {
 		if (defined($osmatches)) {
@@ -119,13 +149,15 @@ foreach my $scan ( @scans ) {
 	}
 }
 
-my $cwd = getcwd();
-if ( ! -d "/home/ubuntu/mirrors/" ) { mkdir "/home/ubuntu/mirrors"; }
-chdir "/home/ubuntu/mirrors/";
-foreach my $ip ( @webs ) {
-	next if ($ip eq '66.27.87.243');	# Don't mirror my site.
-	#my $web = WWW::Mechanize->new();
-	#$web->get($ip);
-	system("wget -q -t 1 -T 5 -m $ip");
+if ($mirror) {
+	my $cwd = getcwd();
+	if ( ! -d "/home/ubuntu/mirrors/" ) { mkdir "/home/ubuntu/mirrors"; }
+	chdir "/home/ubuntu/mirrors/";
+	foreach my $ip ( @webs ) {
+		next if ($ip eq '66.27.87.243');	# Don't mirror my site.
+		#my $web = WWW::Mechanize->new();
+		#$web->get($ip);
+		system("wget -q -t 1 -T 5 -m $ip");
+	}
+	chdir "$cwd";
 }
-chdir "$cwd";
