@@ -50,6 +50,7 @@ end
 
 get_ipt
 
+to_block = Array.new
 ips.each do |ip,count|
 	print "Found offending IP "
 	puts "#{ip.to_s.red}, count: #{count.to_s.magenta}"
@@ -57,5 +58,13 @@ ips.each do |ip,count|
 		puts "blocked".green
 	else
 		puts "not blocked".red
+		if count >= 6
+			to_block.push(ip)
+		end
 	end
 end
+
+to_block.each do |ip|
+	puts "-A fail2ban-ssh -s #{ip}/32 -j REJECT --reject-with icmp-port-unreachable"
+end
+
