@@ -28,6 +28,7 @@ def get_ipt(today = Date.today)
 			@fw_ips.push(ip)
 		end
 	end
+	puts "#{@fw_ips.length} IPs in fw list.".yellow
 end
 
 today = Date.today
@@ -53,7 +54,7 @@ ips.each do |ip,count|
 	print "Found offending IP "
 	puts "#{ip.to_s.red}, count: #{count.to_s.magenta}"
 	if @fw_ips.include? ip
-		puts "bloacked".green
+		puts "blocked".green
 	else
 		puts "not blocked".red
 	end
