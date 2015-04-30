@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+require 'netaddr'
+
+def check_whitelist(ipnet)
+	sdge = NetAddr::CIDR.create('161.209.0.0/16')
+	home = NetAddr::CIDR.create('66.27.86.143/32')
+	
+	case (ipnet)
+	when sdge.contains?(ipnet)
+		return true
+	when home.contains?(ipnet)
+		return true
+	else
+		return false
+	end
+end
+
+def get_ipt(today = Date.today)
+	out = `iptables-save > /root/iptables-save-#{today}`
+	#puts out.to_s.cyan
+	@fw_ips = Array.new
+	File.open("/root/iptables-save-#{today}", "r").each_line do |l|
+		l.chomp!
+		if l =~ /(\d+\.\d+\.\d+\.\d+)\/?/
+			ip = $1
+			@fw_ips.push(ip)
+		end
+	end
+end
+
+today = Date.today
+print "Today is "
+puts today.to_s.blue
+ips = Hash.new
+File.open('/var/log/auth.log', 'r').each_line do |line|
+	line.chomp!
+	if line =~ /Invalid user (.*) from (.*)/
+		user = $1
+		ip = $2
+		if ! ips.include?(ip)
+			ips[ip] = 1
+		else
+			ips[ip] += 1
+		end
+	end
+end
+
+get_ipt
+
+ips.each do |ip,count|
+	print "Found offending IP "
+	puts "#{ip.to_s.red}, count: #{count.to_s.magenta}"
+	if @fw_ips.include? ip
+		puts "bloacked".green
+	else
+		puts "not blocked".red
+	end
+end
