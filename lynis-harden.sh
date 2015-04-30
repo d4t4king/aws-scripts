@@ -66,20 +66,21 @@ case $OS in
 esac
 /etc/init.d/postfix reload
 
+# Given some testing, this has a tendency to break stuff.
 # default umasks
-echo "Setting default umasks..."
-case $OS in
-	"debian/ubuntu")
-		sed -i -e 's/\(UMASK.*\?\)022/\1027/' /etc/login.defs
-		sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
-		;;
-	"gentoo")
-		sed -i -e 's/^\(umask\) [0-9][0-9][0-9]/\1 027/' /etc/profile
-		sed -i -e 's/^\(UMASK\)\s*[0-9][0-9][0-9]/\1	027/' /etc/login.defs
-		;;
-	*)
-		;;
-esac
+#echo "Setting default umasks..."
+#case $OS in
+#	"debian/ubuntu")
+#		sed -i -e 's/\(UMASK.*\?\)022/\1027/' /etc/login.defs
+#		sed -i -e 's/\(umask\) 022/\1 027/' /etc/init.d/rc
+#		;;
+#	"gentoo")
+#		sed -i -e 's/^\(umask\) [0-9][0-9][0-9]/\1 027/' /etc/profile
+#		sed -i -e 's/^\(UMASK\)\s*[0-9][0-9][0-9]/\1	027/' /etc/login.defs
+#		;;
+#	*)
+#		;;
+#esac
 
 # update first
 echo "Updating system and checking for hardening tools..."
