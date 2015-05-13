@@ -17,6 +17,13 @@ my $hostname = `hostname -f`;
 chomp($hostname);
 
 my $gip = Geo::IP::PurePerl->new(GEOIP_STANDARD);
+
+my $dbfile = '/home/ubuntu/access_data.db';
+if ( ! -f $dbfile || -z $dbfile ) {
+	system("sqlite3 $dbfile 'CREATE TABLE ips(ip varchar(255), cc varchar(4), country_name varchar(255), scanned boolean);'");
+	system("sqlite3 $dbfile 'CREATE TABLE useragents(ua varchar(255));'");
+}
+
 %dbuas = &get_sqlite_data("select ua from useragents");
 
 %dbips = &get_sqlite_data("select ip from ips");

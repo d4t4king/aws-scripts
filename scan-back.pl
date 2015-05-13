@@ -11,8 +11,10 @@ foreach my $row ( @rows ) {
 	chomp($row);
 	my ($ip, $cc, $cn, $scanned) = split(/\|/, $row);
 	print "$row\n";
-	print "Scanning $ip...";
-	system("nmap -A -sS -Pn -T3 -oA /home/ubuntu/nmap_arch/$ip $ip");
-	print "done.\n";
-	system("sqlite3 /home/ubuntu/access_data.db \"update ips set scanned='1' where ip='$ip'\"");
+	if ($scanned != 1) {
+		print "Scanning $ip...";
+		system("nmap -A -sS -Pn -T3 -oA /home/ubuntu/nmap_arch/$ip $ip");
+		print "done.\n";
+		system("sqlite3 /home/ubuntu/access_data.db \"update ips set scanned='1' where ip='$ip'\"");
+	}
 }

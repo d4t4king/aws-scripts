@@ -66,6 +66,7 @@ case $OS in
 esac
 /etc/init.d/postfix reload
 
+# Given some testing, this has a tendency to break stuff.
 # default umasks
 #echo "Setting default umasks..."
 #case $OS in

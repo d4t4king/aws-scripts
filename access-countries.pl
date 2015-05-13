@@ -32,8 +32,17 @@ close IN;
 #system("gzip -d /tmp/GeoIP.dat.gz");
 #system("cp -vf /tmp/GeoIP.dat /usr/local/share/GeoIP/");
 
+# check if the database file exists
+my $dbfile = '/www/db/countries.db';
+if ( ! -f $dbfile ) {
+	system("sqlite3 $dbfile 'CREATE TABLE countries (ip varchar(255), country_code varchar(4), country_name varchar(255), hitcount INTEGER);'");
+}
+if (( -f $dbfile ) && ( -z $dbfile )) {
+	system("sqlite3 $dbfile 'CREATE TABLE countries (ip varchar(255), country_code varchar(4), country_name varchar(255), hitcount INTEGER);'");
+}
+
 my %records;
-my @results = `sqlite3 /www/db/countries.db 'select ip, hitcount from countries';`;
+my @results = `sqlite3 $dbfile 'select ip, hitcount from countries';`;
 foreach my $rec ( @results ) {
 	chomp($rec);
 	my ($dip, $dhc) = split(/\|/, $rec);
