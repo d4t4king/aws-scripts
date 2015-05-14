@@ -52,13 +52,13 @@ begin
 				to_write[:browser] = Array.new
 			end
 			to_write[:browser].push(row[0])
-		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent|WhatWeb)/
+		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent|WhatWeb|NeohapsisLab)/
 			puts "scanner".green
 			unless to_write[:scanner].kind_of?(Array)
 				to_write[:scanner] = Array.new
 			end
 			to_write[:scanner].push(row[0])
-		when /(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats|revolt)/
+		when /(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats|revolt|AccServer)/
 			puts "bot".green
 			unless to_write[:bot].kind_of?(Array)
 				to_write[:bot] = Array.new
