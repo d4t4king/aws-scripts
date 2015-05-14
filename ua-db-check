@@ -58,7 +58,7 @@ begin
 				to_write[:scanner] = Array.new
 			end
 			to_write[:scanner].push(row[0])
-		when /(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats)/
+		when /(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats|revolt)/
 			puts "bot".green
 			unless to_write[:bot].kind_of?(Array)
 				to_write[:bot] = Array.new
@@ -70,7 +70,7 @@ begin
 				to_write[:shellshock] = Array.new
 			end
 			to_write[:shellshock].push(row[0])
-		when /(?:iPhone|iPad|[Mm]obile)/
+		when /(?:iPhone|iPad|[Mm]obile|[Aa]ndroid)/
 			puts "mobile".green
 			unless to_write[:mobile].kind_of?(Array)
 				to_write[:mobile] = Array.new
