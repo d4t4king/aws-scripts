@@ -16,6 +16,12 @@ begin
 				to_write[:malware] = Array.new
 			end
 			to_write[:malware].push(row[0])
+		when /(?:ByZr|ZeMu)/
+			puts "malware".green
+			unless to_write[:malware].kind_of?(Array)
+				to_write[:malware] = Array.new
+			end
+			to_write[:malware].push(row[0])
 		when /facebookexternalhit/
 			puts "Facebook".green
 			unless to_write[:automaton].kind_of?(Array)
@@ -28,13 +34,13 @@ begin
 				to_write[:browser] = Array.new
 			end
 			to_write[:browser].push(row[0])
-		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker)/
+		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu)/
 			puts "scanner".green
 			unless to_write[:scanner].kind_of?(Array)
 				to_write[:scanner] = Array.new
 			end
 			to_write[:scanner].push(row[0])
-		when /(bot|crawler|AppEngine|Test)/
+		when /(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94)/
 			puts "bot".green
 			unless to_write[:bot].kind_of?(Array)
 				to_write[:bot] = Array.new
@@ -52,6 +58,13 @@ begin
 				to_write[:mobile] = Array.new
 			end
 			to_write[:mobile].push(row[0])
+		when /Go 1.1 package http/
+			puts "Go".green
+			#puts "\t#{row[0]}".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
 		when /perl/i
 			puts "perl".green
 			#puts "\t#{row[0]}".green

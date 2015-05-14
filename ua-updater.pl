@@ -11,6 +11,10 @@ my $db = '/www/db/useragents';
 my ($ua);
 my (%uas, %dbdata);
 
+if ( ! -f $db || -z $db ) {
+	system("sqlite3 $db 'CREATE TABLE useragents(uas varhcar(255), type varchar(255), hitcount int);'");
+}
+
 #open IN, "</var/log/nginx/access.log" or die "Couldn't access /var/log/nginx/access.log: $! \n";
 open IN, "</tmp/access_log" or die "Couldn't access /tmp/access.log: $! \n";
 while (my $line = <IN>) {
