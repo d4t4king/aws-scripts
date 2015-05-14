@@ -10,13 +10,19 @@ begin
 	db.execute("SELECT * FROM useragents WHERE type=''") do |row|
 		#puts row[0].inspect.to_s
 		case row[0]
+		when /(?:(?:\/|(?:\\x|%)5[cC]|%2[fF])\.\.(?:\/|(?:\\x|%)5[cC]|%2[fF]))+/
+			puts "amature hax".green
+			unless to_write[:hax].kind_of?(Array)
+				to_write[:hax] = Array.new
+			end
+			to_write[:hax].push(row[0])
 		when /^\\x22/
 			puts "malware".green
 			unless to_write[:malware].kind_of?(Array)
 				to_write[:malware] = Array.new
 			end
 			to_write[:malware].push(row[0])
-		when /(?:ByZr|ZeMu)/
+		when /(?:ByZr|ZmEu)/
 			puts "malware".green
 			unless to_write[:malware].kind_of?(Array)
 				to_write[:malware] = Array.new
@@ -46,13 +52,13 @@ begin
 				to_write[:browser] = Array.new
 			end
 			to_write[:browser].push(row[0])
-		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent)/
+		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent|WhatWeb)/
 			puts "scanner".green
 			unless to_write[:scanner].kind_of?(Array)
 				to_write[:scanner] = Array.new
 			end
 			to_write[:scanner].push(row[0])
-		when /(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94)/
+		when /(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats)/
 			puts "bot".green
 			unless to_write[:bot].kind_of?(Array)
 				to_write[:bot] = Array.new
@@ -131,6 +137,9 @@ begin
 			if k.to_s == "browser"
 				puts "UPDATE useragents SET type='browser likely' WHERE uas='#{vv}'"
 				db.execute "UPDATE useragents SET type='browser likely' WHERE uas='#{vv}'"
+			elsif k.to_s == "hax"
+				puts "UPDATE useragents SET type='amature hax' WHERE uas='#{vv}'"
+				db.execute "UPDATE useragents SET type='amature hax' WHERE uas='#{vv}'"
 			else
 				puts "UPDATE useragents SET type='#{k}' WHERE uas='#{vv}'"
 				db.execute "UPDATE useragents SET type='#{k}' WHERE uas='#{vv}'"
