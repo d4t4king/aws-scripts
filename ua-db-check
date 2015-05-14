@@ -28,7 +28,7 @@ begin
 				to_write[:browser] = Array.new
 			end
 			to_write[:browser].push(row[0])
-		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com)/
+		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker)/
 			puts "scanner".green
 			unless to_write[:scanner].kind_of?(Array)
 				to_write[:scanner] = Array.new
