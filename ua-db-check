@@ -28,13 +28,25 @@ begin
 				to_write[:automaton] = Array.new
 			end
 			to_write[:automaton].push(row[0])
+		when /^Mozilla\/5.0 .* Chrome\/[234]\d.\d.\d{3,4}.\d/
+			puts "Chrome".green
+			unless to_write[:browser].kind_of?(Array)
+				to_write[:browser] = Array.new
+			end
+			to_write[:browser].push(row[0])
+		when /^Mozilla\/5.0 .* Firefox\/[23]\d.\d$/
+			puts "Firefox".green
+			unless to_write[:browser].kind_of?(Array)
+				to_write[:browser] = Array.new
+			end
+			to_write[:browser].push(row[0])
 		when /Mozilla\/5.0 \(Macintosh; (?:U;\s*)?Intel Mac OS X.*Safari/
 			puts "Mac".green
 			unless to_write[:browser].kind_of?(Array)
 				to_write[:browser] = Array.new
 			end
 			to_write[:browser].push(row[0])
-		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu)/
+		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent)/
 			puts "scanner".green
 			unless to_write[:scanner].kind_of?(Array)
 				to_write[:scanner] = Array.new
