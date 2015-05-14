@@ -47,6 +47,13 @@ begin
 				to_write[:automaton] = Array.new
 			end
 			to_write[:automaton].push(row[0])
+		when /PycURL\/7.19.7/
+			puts "PycURL".green
+			#puts "\t#{row[0]}".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
 		when /python/i
 			puts "python".green
 			#puts "\t#{row[0]}".green
