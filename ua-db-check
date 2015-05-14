@@ -1,0 +1,100 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+require 'sqlite3'
+require 'pp'
+
+to_write = Hash.new
+begin
+	db = SQLite3::Database.open "/www/db/useragents"
+	db.execute("SELECT * FROM useragents WHERE type=''") do |row|
+		#puts row[0].inspect.to_s
+		case row[0]
+		when /Mozilla\/5.0 \(Macintosh; (?:U;\s*)?Intel Mac OS X.*Safari/
+			puts "Mac".green
+			unless to_write[:browser].kind_of?(Array)
+				to_write[:browser] = Array.new
+			end
+			to_write[:browser].push(row[0])
+		when /(?:scanner|Porkbun\/Mustache)/
+			puts "scanner".green
+			unless to_write[:scanner].kind_of?(Array)
+				to_write[:scanner] = Array.new
+			end
+			to_write[:scanner].push(row[0])
+		when /(bot|crawler|AppEngine|Test)/
+			puts "bot".green
+			unless to_write[:bot].kind_of?(Array)
+				to_write[:bot] = Array.new
+			end
+			to_write[:bot].push(row[0])
+		when /^\(\)\s*\{\s*[a-z:]+;\s*\};.*/
+			puts "shellshock".green
+			unless to_write[:shellshock].kind_of?(Array)
+				to_write[:shellshock] = Array.new
+			end
+			to_write[:shellshock].push(row[0])
+		when /(?:iPhone|iPad|[Mm]obile)/
+			puts "mobile".green
+			unless to_write[:mobile].kind_of?(Array)
+				to_write[:mobile] = Array.new
+			end
+			to_write[:mobile].push(row[0])
+		when /perl/i
+			puts "perl".green
+			#puts "\t#{row[0]}".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
+		when /python/i
+			puts "python".green
+			#puts "\t#{row[0]}".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
+		when /java/i
+			puts "Java".green
+			#puts "\t#{row[0]}".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
+		when /curl/
+			puts "cURL".green
+			#puts "\t#{row[0]}".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
+		else
+			puts row[0].to_s.magenta
+		end
+	end
+rescue SQLite3::Exception => e
+	puts "Error: #{e.message}".red
+ensure 
+	db.close if db
+end
+
+#pp to_write
+begin
+	db = SQLite3::Database.open "/www/db/useragents"
+	to_write.each do |k,v|
+		puts k
+		to_write[k].each do |vv|
+			if k.to_s == "browser"
+				puts "UPDATE useragents SET type='browser likely' WHERE uas='#{vv}'"
+				db.execute "UPDATE useragents SET type='browser likely' WHERE uas='#{vv}'"
+			else
+				puts "UPDATE useragents SET type='#{k}' WHERE uas='#{vv}'"
+				db.execute "UPDATE useragents SET type='#{k}' WHERE uas='#{vv}'"
+			end
+		end
+	end
+rescue SQLite3::Exception => e
+	puts "ERROR: #{e.message}"
+ensure
+	db.close if db
+end
