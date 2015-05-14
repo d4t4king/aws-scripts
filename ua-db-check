@@ -10,13 +10,25 @@ begin
 	db.execute("SELECT * FROM useragents WHERE type=''") do |row|
 		#puts row[0].inspect.to_s
 		case row[0]
+		when /^\\x22/
+			puts "malware".green
+			unless to_write[:malware].kind_of?(Array)
+				to_write[:malware] = Array.new
+			end
+			to_write[:malware].push(row[0])
+		when /facebookexternalhit/
+			puts "Facebook".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
 		when /Mozilla\/5.0 \(Macintosh; (?:U;\s*)?Intel Mac OS X.*Safari/
 			puts "Mac".green
 			unless to_write[:browser].kind_of?(Array)
 				to_write[:browser] = Array.new
 			end
 			to_write[:browser].push(row[0])
-		when /(?:scanner|Porkbun\/Mustache)/
+		when /(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com)/
 			puts "scanner".green
 			unless to_write[:scanner].kind_of?(Array)
 				to_write[:scanner] = Array.new
