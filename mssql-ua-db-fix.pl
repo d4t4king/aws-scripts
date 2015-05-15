@@ -134,7 +134,7 @@ foreach my $ua ( sort keys %sql_uas ) {
 			print colored("browser likely\n", "green");
 			push @{$to_write{'browser likely'}}, $ua;
 		}
-		when (/(?:[Ss]can(?:ner)?|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent|WhatWeb|NeohapsisLab|w3af|shellshock-scan|webinspect|[Vv]alidator)|Google-Site-Verification/) {
+		when (/(?:[Ss]can(?:ner)?|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent|WhatWeb|NeohapsisLab|w3af|shellshock-scan|webinspect|[Vv]alidator|Google-Site-Verification|[Cc]loud mapping)/) {
 			print colored("scanner\n", "green");
 			push @{$to_write{'scanner'}}, $ua;
 		}
