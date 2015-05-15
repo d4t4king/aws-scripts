@@ -44,10 +44,63 @@ while (my @row = $sth->fetchrow_array) {
 
 my %to_write = ();;
 foreach my $ua ( sort keys %sql_uas ) {
+	$sth = $dbh->prepare("SELECT id FROM useragents2 WHERE useragent='".quotemeta($ua)."'");
+	$sth->execute();
+	my $found = 0;
+	while (my @row = $sth->fetchrow_array) {
+		$found = $row[0];
+	}
+	#print colored("Record ID: $found\n", "magenta");
+	if ($found > 0) {
+		$sth = $dbh->prepare("DELETE FROM useragents2 WHERE id='$found'");
+		$sth->execute();
+	}	
+	$sth = $dbh->prepare("SELECT id FROM useragents2 WHERE useragent LIKE 'Mozilla3.0%'");
+	$sth->execute();
+	$found = 0;
+	while (my @row = $sth->fetchrow_array) {
+		$found = $row[0];
+	}
+	#print colored("Record ID: $found\n", "magenta");
+	if ($found > 0) {
+		$sth = $dbh->prepare("DELETE FROM useragents2 WHERE id='$found'");
+		$sth->execute();
+	}	
 	given ($ua) {
+		when (/Firefox\/[0-9.]+$/) {
+			print colored("browser likely\n", "green");
+			push @{$to_write{'browser likely'}}, $ua;
+		}
+		# Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+		when (/Mozilla\/[0-9.]+ \(compatible; MSIE [0-9.]+; Windows NT [0-9.]+; .* \)/s) {
+			print colored("browser likely\n", "green");
+			push @{$to_write{'browser likely'}}, $ua;
+		}
+		# Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US;
+		# Mozilla/5.0 (Windows; U; Windows NT 5.1;
+		when (/Mozilla\/[0-9.]+ \(Windows; U; Windows NT [0-9.]+; (?:[a-z]{2}(?:-[a-zA-Z]{2})?).*\)/) {
+			print colored("browser likely\n", "green");
+			push @{$to_write{'browser likely'}}, $ua;
+		}
+		when (/Mozilla\/5.0 \(compatible; MSIE [0-9.]+; Windows NT [0-9.]+;/) {
+			print colored("browser likely\n", "green");
+			push @{$to_write{'browser likely'}}, $ua;
+		}
+		when (/Windows-Media-Player/) {
+			print colored("media-player\n", "green");
+			push @{$to_write{'media-player'}}, $ua;
+		}
 		when (/(?:(?:\/|(?:\\x|%)5[cC]|%2[fF])\.\.(?:\/|(?:\\x|%)5[cC]|%2[fF]))+/) {
 			print colored("amature hax\n", "green");
-			push @{$to_write{'hax'}}, $ua;
+			push @{$to_write{'amateur hax'}}, $ua;
+		}
+		when (/chroot-apach0day/) {
+			print colored("amateur hax\n", "green");
+			push @{$to_write{'amateur hax'}}, $ua;
+		}
+		when (/Mozilla\/42.0 \(compatible; MSIE 28.0; Win128\)/) {
+			print colored("amateur hax\n", "green");
+			push @{$to_write{'amateur hax'}}, $ua;
 		}
 		when (/^\\x22/) {
 			print colored("malware\n", "green");
@@ -65,7 +118,15 @@ foreach my $ua ( sort keys %sql_uas ) {
 			print colored("browser likely\n", "green");
 			push @{$to_write{'browser likely'}}, $ua;
 		}
+		when (/^Mozilla\/5.0 .* Chrome\/[0-9.]+.*Safari\/[0-9.]+$/) {
+			print colored("browser likely\n", "green");
+			push @{$to_write{'browser likely'}}, $ua;
+		}
 		when (/^Mozilla\/5.0 .* Firefox\/[23]\d.\d$/) {
+			print colored("browser likely\n", "green");
+			push @{$to_write{'browser likely'}}, $ua;
+		}
+		when (/(?:^Opera|PLAYSTATION 3)/) {
 			print colored("browser likely\n", "green");
 			push @{$to_write{'browser likely'}}, $ua;
 		}
@@ -73,11 +134,11 @@ foreach my $ua ( sort keys %sql_uas ) {
 			print colored("browser likely\n", "green");
 			push @{$to_write{'browser likely'}}, $ua;
 		}
-		when (/(?:scanner|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent|WhatWeb|NeohapsisLab)/) {
+		when (/(?:[Ss]can(?:ner)?|Porkbun\/Mustache|Morfeus Fucking Scanner|Hivemind|wscheck.com|SSL Labs|the beast|StatsInfo|COMODO SSL Checker|netscan.gtisc.gatech.edu|thunderstone|project25499.com|Nmap Scripting Engine|Netcraft Web Server Survey|panscient.com|NetcraftSurveyAgent|WhatWeb|NeohapsisLab|w3af|shellshock-scan|webinspect|[Vv]alidator)|Google-Site-Verification/) {
 			print colored("scanner\n", "green");
 			push @{$to_write{'scanner'}}, $ua;
 		}
-		when (/(bot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats|revolt|AccServer)/) {
+		when (/(?:[Bb]ot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats|revolt|AccServer|paros|[Bb]rutus|wispr|immoral|LinkWalker|Validation|ImageWalker|spider|[Cc]rawler|TrackBack|SEOstats|Ask Jeeves)/) {
 			print colored("bot\n", "green");
 			push @{$to_write{'bot'}}, $ua;
 		}
@@ -85,12 +146,16 @@ foreach my $ua ( sort keys %sql_uas ) {
 			print colored("shellshock\n", "green");
 			push @{$to_write{'shellshock'}}, $ua;
 		}
-		when (/(?:iPhone|iPad|[Mm]obile|[Aa]ndroid)/) {
+		when (/(?:iPhone|iPad|[Mm]obile|[Aa]ndroid|[Nn]okia)/) {
 			print colored("mobile\n", "green");
 			push @{$to_write{'mobile'}}, $ua;
 		}
 		when (/Go 1.1 package http/) {
 			print colored("Go\n", "green");
+			push @{$to_write{'automaton'}}, $ua;
+		}
+		when (/HTTP_Request2/) {
+			print colored("php\n", "green");
 			push @{$to_write{'automaton'}}, $ua;
 		}
 		when (/perl/i) {
@@ -113,6 +178,10 @@ foreach my $ua ( sort keys %sql_uas ) {
 			print colored("curl\n", "green");
 			push @{$to_write{'automaton'}}, $ua;
 		}
+		when (/wget/i) {
+			print colored("wget\n", "green");
+			push @{$to_write{'automaton'}}, $ua;
+		}
 		default { print colored("No match: $ua\n", "yellow"); }
 	}
 }
@@ -122,7 +191,6 @@ foreach my $t ( sort keys %to_write ) {
 	foreach my $ua ( sort @{$to_write{$t}} ) {
 		print "UPDATE useragents2 SET type_id='$type_ids{$t}' where useragent='$ua';\n";
 		$sth = $dbh->prepare("UPDATE useragents2 SET type_id='$type_ids{$t}' where useragent='$ua';");
-		
 		$sth->execute();
 	}
 }
