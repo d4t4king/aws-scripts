@@ -37,7 +37,7 @@ puts today.to_s.blue
 ips = Hash.new
 File.open('/var/log/auth.log', 'r').each_line do |line|
 	line.chomp!
-	if line =~ /Invalid user (.*) from (.*)/
+	if line =~ /Invalid user (.*?) from ([0-9.]+)/
 		user = $1
 		ip = $2
 		if ! ips.include?(ip)

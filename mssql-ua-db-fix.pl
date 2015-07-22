@@ -33,7 +33,7 @@ while (my @row = $sth->fetchrow_array) {
 
 # get all the user-agents from the mssql db
 $dbh->{LongReadLen} = '65535';
-$sth = $dbh->prepare('SELECT id,useragent,hitcount,type_id FROM useragents2 where type_id="0"');
+$sth = $dbh->prepare('SELECT id,useragent,hitcount,type_id FROM useragents2 where type_id="0" ORDER BY useragent');
 $sth->execute;
 while (my @row = $sth->fetchrow_array) {
 	push @sql_uas, $row[1];
@@ -138,7 +138,7 @@ foreach my $ua ( sort keys %sql_uas ) {
 			print colored("scanner\n", "green");
 			push @{$to_write{'scanner'}}, $ua;
 		}
-		when (/(?:[Bb]ot|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats|revolt|AccServer|paros|[Bb]rutus|wispr|immoral|LinkWalker|Validation|ImageWalker|spider|[Cc]rawler|TrackBack|SEOstats|Ask Jeeves)/) {
+		when (/(?:[Bb][Oo][Tt]|crawler|AppEngine|Test|IBM WebExplorer \/v0.94|DomainWho.is|Robocop|hosterstats|revolt|AccServer|paros|[Bb]rutus|wispr|immoral|LinkWalker|Validation|ImageWalker|spider|[Cc]rawler|TrackBack|SEOstats|Ask Jeeves)/) {
 			print colored("bot\n", "green");
 			push @{$to_write{'bot'}}, $ua;
 		}
@@ -181,6 +181,10 @@ foreach my $ua ( sort keys %sql_uas ) {
 		when (/wget/i) {
 			print colored("wget\n", "green");
 			push @{$to_write{'automaton'}}, $ua;
+		}
+		when (/Mozilla\/4.0 \(compatible; MSIE [0-9.]+;/) {
+			print colored("browser likely\n", "green");
+			push @{$to_write{'browser likely'}}, $ua;
 		}
 		default { print colored("No match: $ua\n", "yellow"); }
 	}
