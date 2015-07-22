@@ -5,6 +5,7 @@ use warnings;
 
 use DBI;
 use Data::Dumper;
+use Term::ANSIColor;
 
 my $webdir = '/www';
 my $webdbdir = "$webdir/db";
@@ -17,7 +18,7 @@ my (@sql_uas);
 
 my $dbh = DBI->connect('DBI:ODBC:DNS', "charlie", 'Pepper123') or
 	die "Unable to connect to the server/database: $DBI::errstr";
-my $sth = $dbh->prepare('SELECT * FROM types');
+my $sth = $dbh->prepare('SELECT id,typename FROM types');
 my $rv = $sth->execute;
 #print "Return Value: $rv\n";
 while (my @row = $sth->fetchrow_array) {
@@ -56,10 +57,15 @@ foreach my $rec ( @sqlite_uas ) {
 	} else {
 		if ($ua =~ /java.in/) { print STDERR "Ignoring user-aget: $ua\n"; $errs++; next; }
 		my $sql = "INSERT INTO useragents2 VALUES (N'$ua', '$hitcount', '$type_ids{$type}');";
-		#print "SQL:  $sql\n";
-		$sth = $dbh->prepare($sql);
-		$sth->execute;
-		$added++;
+		if (((!defined($hitcount)) || $hitcount eq "") || ($hitcount !~ /\d\d?/)) {
+			print colored("ERROR: hitcount not a number!\n", "red");
+			$errs++;
+		} else {
+			print "SQL:  $sql\n";
+			$sth = $dbh->prepare($sql);
+			$sth->execute;
+			$added++;
+		}
 	}
 }
 
