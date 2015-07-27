@@ -64,7 +64,12 @@ ips.each do |ip,count|
 	end
 end
 
-to_block.each do |ip|
-	puts "-A fail2ban-ssh -s #{ip}/32 -j REJECT --reject-with icmp-port-unreachable"
+if to_block.length >= 1
+	puts "Found the following offenders not currently blocked.  Here are the rules ".cyan
+	puts "to block them: ".cyan
+	to_block.each do |ip|
+		puts "-A fail2ban-ssh -s #{ip}/32 -j REJECT --reject-with icmp-port-unreachable"
+	end
+else
+	puts "All baddies already blocked.".green
 end
-
