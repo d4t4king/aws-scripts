@@ -3,6 +3,9 @@
 require 'colorize'
 require 'netaddr'
 
+@ips = Hash.new
+@to_block = Array.new
+
 def check_whitelist(ipnet)
 	sdge = NetAddr::CIDR.create('161.209.0.0/16')
 	home = NetAddr::CIDR.create('66.27.86.143/32')
@@ -31,43 +34,50 @@ def get_ipt(today = Date.today)
 	puts "#{@fw_ips.length} IPs in fw list.".yellow
 end
 
+def parse_authlog()
+	File.open('/var/log/auth.log', 'r').each_line do |line|
+		line.chomp!
+		if line =~ /Invalid user (.*?) from ([0-9.]+)/
+			user = $1
+			ip = $2
+			if ! @ips.include?(ip)
+				@ips[ip] = 1
+			else
+				@ips[ip] += 1
+			end
+		end
+	end
+end
+
+def config_blocks()
+	@ips.each do |ip,count|
+		print "Found offending IP "
+		puts "#{ip.to_s.red}, count: #{count.to_s.magenta}"
+		if @fw_ips.include? ip
+			puts "blocked".green
+		else
+			puts "not blocked".red
+			if count >= 6
+				@to_block.push(ip)
+			end
+		end
+	end
+end
+
 today = Date.today
 print "Today is "
 puts today.to_s.blue
-ips = Hash.new
-File.open('/var/log/auth.log', 'r').each_line do |line|
-	line.chomp!
-	if line =~ /Invalid user (.*?) from ([0-9.]+)/
-		user = $1
-		ip = $2
-		if ! ips.include?(ip)
-			ips[ip] = 1
-		else
-			ips[ip] += 1
-		end
-	end
-end
+
+parse_authlog
 
 get_ipt
 
-to_block = Array.new
-ips.each do |ip,count|
-	print "Found offending IP "
-	puts "#{ip.to_s.red}, count: #{count.to_s.magenta}"
-	if @fw_ips.include? ip
-		puts "blocked".green
-	else
-		puts "not blocked".red
-		if count >= 6
-			to_block.push(ip)
-		end
-	end
-end
+config_blocks
 
-if to_block.length >= 1
+if @to_block.length >= 1
 	puts "Found the following offenders not currently blocked.  Here are the rules ".cyan
 	puts "to block them: ".cyan
-	to_block.each do |ip|
+	@to_block.each do |ip|
 		puts "-A fail2ban-ssh -s #{ip}/32 -j REJECT --reject-with icmp-port-unreachable"
 	end
 else
