@@ -1,0 +1,33 @@
+#!/usr/bin/perl
+
+# Quick script to audotmate pwck and grck checks and
+# fixes.  Most *nix system will have perl installed, 
+# but not likely ruby.  Thus this script in perl.
+
+use strict;
+use warnings;
+
+my $uid = `id -u`;
+chomp($uid);
+#print "ID: $uid\n";
+die "You must be root to run this program.  Quitting!\n" unless ($uid == 0);
+open PWCK, "/usr/sbin/pwck|" or die "Couldn't open pipe to pwck: $! \n";
+while (my $line = <PWCK>) {
+	chomp($line);
+	# user 'www-data': directory '/var/www' does not exist
+	if ($line =~ /user '(.*)': directory '(.*)' does not exist/) {
+		my $user = $1; my $dir = $2;
+		my $rtv = system("mkdir -p $dir");
+		if ($rtv == 0) {
+			$rtv = system("chown -R $user $dir");
+			die "There was a problem setting ownership of $dir to $user.\nReturn value: $rtv\n" unless ($rtv == 0);
+		} else {
+			die "There was a problem creating the directory $dir: $! \n";
+		}
+	} elsif ($line =~ /no changes/) {
+		print "No changes to be made.\n";
+	} else {
+		warn "Couldn't match line: |$line|\n";
+	}
+}
+close PWCK or die "There was a problem closing pwck: $!\n";
