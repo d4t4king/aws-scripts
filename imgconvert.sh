@@ -27,6 +27,16 @@ for P in `ls -1 "$GALLERY_DIR"`; do
 			cp -vr "$GALLERY_DIR/$P" "$BACKUP_DIR/$P"
 			convert "$BACKUP_DIR/$P" -resize 64% "$GALLERY_DIR/$P"
 			;;
+		"2560x1440")
+			echo "Medium Landscap (Horizontal)"
+			cp -vr "$GALLERY_DIR/$P" "$BACKUP_DIR/$P"
+			convert "$BACKUP_DIR/$P" -resize 1024x576 "$GALLERY_DIR/$P"
+			;;
+		"5934x3956")
+			echo "Enormous Landscape (Horizontal)"
+			cp -vr "$GALLERY_DIR/$P" "$BACKUP_DIR/$P"
+			convert "$BACKUP_DIR/$P" -resize 20% "$GALLERY_DIR/$P"
+			;;
 		"5809x3873")
 			echo "Enormous Landscape (Horizontal)"
 			cp -vr "$GALLERY_DIR/$P" "$BACKUP_DIR/$P"
