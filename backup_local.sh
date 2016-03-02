@@ -25,11 +25,12 @@ elif [ "${1}x" == "varx" ]; then
 		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue /var /etc
 	fi
 else
+	# Skip any VMs for the full backup.  We should have gotten them in the "home" backup.
 	TARBALL="/tmp/full_${DATE}_${HOSTNAME}.tar.xz"
 	if [ "${HOSTNAME}" == "mars" ]; then
-		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" --exclude /s /
+		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" --exclude "/home/*/VirtualBox VMs/" --exclude /s /
 	else
-		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" /
+		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" --exclude "/home/*/Virtualbox VMs/" /
 	fi
 fi
 
