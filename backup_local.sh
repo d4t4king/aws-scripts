@@ -38,3 +38,5 @@ elif [ "${HOSTNAME}" == "mars" ]; then
 else
 	scp ${TARBALL} oortcloud:/opt/backups/${HOSTNAME}/
 fi
+rm -vf ${TARBALL}
+
