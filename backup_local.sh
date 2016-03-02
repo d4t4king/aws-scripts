@@ -25,9 +25,9 @@ elif [ "${1}x" == "varx" ]; then
 else
 	TARBALL="/tmp/full_${DATE}_${HOSTNAME}.tar.xz"
 	if [ "${HOSTNAME}" == "mars" ]; then
-		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "*.iso" --exclude /s /
+		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" --exclude /s /
 	else
-		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "*.iso" /
+		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" /
 	fi
 fi
 
