@@ -7,7 +7,9 @@ echo $DATE
 HOSTNAME=$(hostname -f)
 
 echo $HOSTNAME
-
+if [ $HOSTNAME == "mercury.dataking.us" ]; then
+	/usr/local/bin/pd3000 "Starting $1 backup..."
+fi
 if [ "${1}x" == "homex" ]; then
 	TARBALL="/tmp/home_${DATE}_${HOSTNAME}.tar.xz"
 	echo $TARBALL
@@ -31,6 +33,9 @@ else
 	fi
 fi
 
+if [ $HOSTNAME == "mercury.dataking.us" ]; then
+	/usr/local/bin/pd3000 "Backup complete." "Copying to storage..."
+fi
 if [ "${HOSTNAME}" == "jupiter.dataking.us" -o "${HOSTNAME}" == "neptune.dataking.us" ]; then
 	scp ${TARBALL} 192.168.100.5:/opt/backups/${HOSTNAME}/
 elif [ "${HOSTNAME}" == "mars" ]; then
@@ -39,4 +44,6 @@ else
 	scp ${TARBALL} oortcloud:/opt/backups/${HOSTNAME}/
 fi
 rm -vf ${TARBALL}
-
+if [ $HOSTNAME == "mercury.dataking.us" ]; then
+	/usr/local/bin/pd3000 "$1 backup on " "${HOSTNAME} compelte."
+fi
