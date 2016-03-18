@@ -5,9 +5,24 @@ use warnings;
 
 use Geo::IP::PurePerl;
 use Data::Dumper;
+use Term::ANSIColor;
+use Getopt::Long qw( :config no_ignore_case bundling );
+
+my ($help, $verbose, $log);
+$verbose = 0;
+GetOptions(
+	'h|help'		=>	\$help,
+	'v|verbose+'	=>	\$verbose,
+	'l|log=s'		=>	\$log,
+);
 
 #my $access = '/var/log/nginx/access.log';
-my $access = '/tmp/access_log';
+my $access;
+if (defined($log)) {
+	$access = $log;
+} else {
+	$access = '/tmp/access_log';
+}
 my (%ips,%ccs,%cns);
 my $gip = Geo::IP::PurePerl->new(GEOIP_STANDARD);
 my $hostname = `hostname -f`;
