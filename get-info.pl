@@ -9,6 +9,8 @@ use Geo::IP::PurePerl;
 use XML::Simple;
 use MIME::Lite;
 use Net::IPv4Addr qw( :all );
+use Term::ANSIColor;
+use Getopt::Long qw( :config no_ignore_case bundling );
 
 my ($ip, $datestr, $req, $httpcode, $bytes, $ua);
 my (%uas, %ips, %pmal, %dbuas, %dbips);
