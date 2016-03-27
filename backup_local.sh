@@ -41,6 +41,8 @@ if [ "${HOSTNAME}" == "jupiter.dataking.us" -o "${HOSTNAME}" == "neptune.datakin
 	scp ${TARBALL} 192.168.100.5:/opt/backups/${HOSTNAME}/
 elif [ "${HOSTNAME}" == "luna" ]; then
 	scp ${TARBALL} oortcloud:/opt/backups/${HOSTNAME}.dataking.us/
+elif [ "${HOSTNAME}" == "oortcloud.dataking.us" ]; then
+	cp -vf ${TARBALL} /opt/backups/${HOSTNAME}/
 else
 	scp ${TARBALL} oortcloud:/opt/backups/${HOSTNAME}/
 fi
