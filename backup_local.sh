@@ -28,7 +28,7 @@ else
 	# Skip any VMs for the full backup.  We should have gotten them in the "home" backup.
 	TARBALL="/tmp/full_${DATE}_${HOSTNAME}.tar.xz"
 	if [ "${HOSTNAME}" == "luna" ]; then
-		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" --exclude "*/VirtualBox VMs" --exclude "*/vmware/*" --exclude "*.ova" --exclude /s --exclude /var/cache/apt/archives /
+		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" --exclude "*/VirtualBox VMs" --exclude "*/vmware/*" --exclude "*.ova" --exclude /s --exclude /var/www/html/mirror /
 	else
 		tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "swe*" --exclude "otw*" --exclude "*.iso" --exclude "*/VirtualBox VMs" --exclude "*/vmware/*" --exclude "*.ova" --exclude /var/cache/apt/archives /
 	fi
