@@ -20,9 +20,9 @@ elif [ "${1}x" == "varx" ]; then
 	if [ "${HOSTNAME}" == "luna" ]; then 
 		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue --exclude /var/www/html/mirror --exclude /var/www/html/isos /var /etc
 	elif [ "${HOSTNAME}" == "mercury.dataking.us" ]; then
-		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue --exclude /var/www/html/mirror --exclude /var/www/html/isos /var /etc
+		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue --exclude /var/www/html/mirror --exclude /var/www/html/isos --exclude /var/cache/apt/archive /var /etc
 	else
-		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue /var /etc
+		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue --exclude /var/cache/apt/archive /var /etc
 	fi
 else
 	# Skip any VMs for the full backup.  We should have gotten them in the "home" backup.
