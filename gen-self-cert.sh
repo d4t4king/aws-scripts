@@ -11,7 +11,7 @@ fi
 
 openssl genrsa -des3 -out ${SERVER}.key 2048
 
-openssl req -new -key ${SERVER}.key -out ${SERER}.csr
+openssl req -new -key ${SERVER}.key -out ${SERVER}.csr
 
 cp ${SERVER}.key ${SERVER}.key.org
 openssl rsa -in ${SERVER}.key.org -out ${SERVER}.key
