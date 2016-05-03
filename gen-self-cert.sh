@@ -13,7 +13,7 @@ openssl genrsa -des3 -out ${SERVER}.key 2048
 
 openssl req -new -key ${SERVER}.key -out ${SERER}.csr
 
-cp ${SERER}.key ${SERVER}.key.org
+cp ${SERVER}.key ${SERVER}.key.org
 openssl rsa -in ${SERVER}.key.org -out ${SERVER}.key
 
 openssl x509 -req -days 365 -in ${SERVER} -signkey ${SERVER}.key -out ${SERVER}.crt
