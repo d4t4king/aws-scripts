@@ -21,7 +21,7 @@ else
 	tar cvfJ ${TARBALL} --exclude /dev --exclude /tmp --exclude /proc --exclude /sys --exclude-vcs --exclude-backups --exclude /media --exclude /mnt --exclude /var/tmp --exclude /run --exclude /var/run --exclude "*.iso" --exclude "*/VirtualBox VMs" --exclude "*/vmware/*" --exclude "*.ova" --exclude "/var/cache/apt/archives/*" /
 fi
 
-scp ${TARBALL} 172.16.100.183:/opt/backups/
+scp ${TARBALL} 172.18.201.70:/opt/backups/
 if [ $? == 0 ]; then
 	rm -vf ${TARBALL}
 else
