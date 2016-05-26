@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DATE=$(date '+%Y-%m-%d')
-tar cvpfJ /root/www.dataking.technology-${DATE}.tar.xz --directory /root/ /usr/share/nginx/html/ /root/www.dataking.technology/ /etc/nginx/
+tar cvpfJ /root/www.dataking.technology-${DATE}.tar.xz --directory /root/ /usr/share/nginx/html/ /root/www.dataking.technology/ /etc/nginx/ /etc/ssl/
 if [ $? -eq 0 ]; then
 	# old method
 	#scp -P 2222 /root/www.dataking.technology-${DATE}.tar.xz root@vhome.dataking.us:/media/sf_backups/
