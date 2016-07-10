@@ -3,11 +3,15 @@
 use warnings;
 use strict;
 
+use feature qw( switch );
+no if $] ge '5.018', warnings => "experimental::smartmatch";
+
 use Term::ANSIColor;
 use Data::Dumper;
 use DBI;
 use Getopt::Long qw( :config no_ignore_case bundling );
 use Socket;
+use Date::Calc qw( Today_and_Now );
 
 my ($help,$verbose,$database,$user,$pass,$host);
 $verbose = 0;
@@ -38,9 +42,16 @@ print colored("Got $ip_addr for IP address. \n", "bold cyan") if ($verbose);
 unless (&host_exists($ip_addr, $fqdn)) {
 	# create the host, then
 	print "create host \n";
+	my $rtv = &insert_host($ip_addr, $fqdn);
+	print colored("Got return value: $rtv \n","bold cyan") if ($verbose);
 } 
+my $hostid = &get_hostid($ip_addr, $fqdn);
 # insert the data
 print "insert data \n";
+my $meminfo = &get_meminfo;
+print Dumper($meminfo) if ($verbose);
+my $rtv = &insert_meminfo($hostid, $meminfo);
+print "Final return value: $rtv \n";
 
 ###############################################################################
 # Subs
@@ -82,4 +93,91 @@ sub host_exists {
 	$sth->finish() or die colored($DBI::errstr."\n", "bold red");
 	$db->disconnect() or die colored($DBI::errstr."\n", "bold red");
 	return $exists;
+}
+
+sub get_hostid {
+	my ($ip,$name) = @_;
+	my $db = DBI->connect($dsn, $user, $pass) or die colored($DBI::errstr."\n", "bold red");
+	my $sql = "SELECT id FROM systems WHERE ipaddr='$ip' and hostname='$name'";
+	my $sth = $db->prepare($sql) or die colored($DBI::errstr."\n", "bold red");
+	my $rtv = $sth->execute();
+	my @row = $sth->fetchrow_array() or die colored($DBI::errstr."\n", "bold red");
+	chomp(@row);
+	return $row[0];
+}
+
+sub insert_host {
+	my ($ip, $name, $vm, $os) = @_;
+	if (!defined($vm)) { 
+		# assume it's not(?)
+		$vm = 0;
+	}
+	if ((!defined($os)) or ($os eq '')) {
+		# try to get the OS
+		my $lsb = &get_binary('lsb_release');
+		my $sed = &get_binary('sed');
+		$os = qx($lsb -d | $sed -e 's/Distribution: \(.*\)/\1/');
+		if ((!defined($os)) or ($os eq "")) { return -1; }
+		chomp($os);
+	}
+
+	my $sql = "INSERT INTO systems (ipaddr,hostname,vm,os) VALUES ('$ip','$name','$vm','$os')";
+	my $db = DBI->connect($dsn, $user, $pass) or die colored($DBI::errstr."\n", "bold red");
+	my $sth = $db->prepare($sql) or die colored($BI::errstr."\n", "hold red");;
+	my $rtv = $sth->execute() or die colored($DBI::errstr."\n", "bold red");
+	print "insert_host::rtv: $rtv \n";
+	$sth->finish();
+	$db->disconnect();
+	return $rtv;
+}
+
+sub get_meminfo {
+	my %meminfo;
+
+	my $free = &get_binary('free');
+	my $raw_out = qx($free -ot);
+	my @lines = split(/\n/, $raw_out);
+	foreach my $ln ( @lines ) {
+		given ($ln) {
+			when (/^(?:\s|\t)+total\s+used\s+free\s+shared\s+buffers\s+cached/) { next; }
+			when (/Mem:\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+).*/) {
+				my $t = $1; my $u = $2; my $f = $3; 
+				my $s = $4; my $b = $5; my $c = $6;
+				$meminfo{'memory'}{'total'}		= $t;
+				$meminfo{'memory'}{'free'}		= $f;
+				$meminfo{'memory'}{'used'}		= $u;
+				$meminfo{'memory'}{'shared'}	= $s;
+				$meminfo{'memory'}{'buffered'}	= $b;
+				$meminfo{'memory'}{'cached'}	= $c;
+			}
+			when (/Swap:\s+(\d+)\s+(\d+)\s+(\d+).*/) {
+				my $t = $1; my $u = $2; my $f = $3; 
+				$meminfo{'swap'}{'total'}		= $t;
+				$meminfo{'swap'}{'free'}		= $f;
+				$meminfo{'swap'}{'used'}		= $u;
+			}
+			when (/Total:\s+(\d+)\s+(\d+)\s+(\d+).*/) {
+				my $t = $1; my $u = $2; my $f = $3; 
+				$meminfo{'total'}{'total'}		= $t;
+				$meminfo{'total'}{'free'}		= $f;
+				$meminfo{'total'}{'used'}		= $u;
+			}
+			default { 
+				warn colored("Line didn't match: |$ln| \n", "bold yellow");
+				$meminfo{'memory'} = -1; }
+		}
+	}
+	return \%meminfo;
+}
+
+sub insert_meminfo {
+	my ($hostid, $meminfo) = @_;
+
+	my $time = time();
+	my ($y, $m, $d, $h, $M, $s) = Today_and_Now($time);
+	my $sql = "INSERT INTO memstats (host_id, memory_used, total_memory, swap_used, total_swap, date_entered) VALUES ('$hostid','$meminfo->{'memory'}{'used'}','$meminfo->{'memory'}{'total'}','$meminfo->{'swap'}{'used'}','$meminfo->{'swap'}{'total'}','$y/$m/$d $h:$M:$s')";
+	print "SQL: $sql \n" if ($verbose);
+	my $db = DBI->connect($dsn, $user, $pass) or die colored($DBI::errstr."\n", "bold red");
+	my $sth = $db->prepare($sql) or die colored($DBI::errstr."\n", "bold red");
+	my $rtv = $sth->execute() or die colored($DBI::errstr."\n", "bold red");
 }
