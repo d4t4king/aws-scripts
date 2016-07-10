@@ -1,0 +1,85 @@
+#!/usr/bin/perl -w
+
+use warnings;
+use strict;
+
+use Term::ANSIColor;
+use Data::Dumper;
+use DBI;
+use Getopt::Long qw( :config no_ignore_case bundling );
+use Socket;
+
+my ($help,$verbose,$database,$user,$pass,$host);
+$verbose = 0;
+GetOptions(
+	'h|help'		=>	\$help,
+	'v|verbose+'	=>	\$verbose,
+	'd|database=s'	=>	\$database,
+	'H|host=s'		=>	\$host,
+	'u|user=s'		=>	\$user,
+	'p|pass=s'		=>	\$pass,
+);
+
+$database	||= 'sysstats';
+$user		||= 'root';
+$host		||=	'salt.dataking.us';
+my $dsn = "dbi:mysql:database=$database;host=$host";
+
+if ((!defined($pass)) or ($pass eq '')) { die colored("Need the database password.  Use the '-p' option. \n", "bold red"); }
+
+my $hostname = &get_binary('hostname');
+my $iproute = &get_binary('ip');
+my $fqdn = qx($hostname -f);
+chomp($fqdn);
+print colored("Got $fqdn for hostname. \n", "bold cyan") if ($verbose);
+my $ip_addr = inet_ntoa(scalar gethostbyname($fqdn || 'localhost'));
+print colored("Got $ip_addr for IP address. \n", "bold cyan") if ($verbose);
+
+unless (&host_exists($ip_addr, $fqdn)) {
+	# create the host, then
+	print "create host \n";
+} 
+# insert the data
+print "insert data \n";
+
+###############################################################################
+# Subs
+###############################################################################
+sub usage {
+	print <<END;
+
+FIX ME!!!
+
+Print Usage!
+
+END
+	exit 1;
+}
+
+sub get_binary {
+	my $bin = shift(@_);
+	my $bin_path = qx(which $bin);
+	if ((defined($bin_path)) && ($bin_path ne '')) {
+		chomp($bin_path);
+		return $bin_path;
+	}
+}
+
+sub host_exists {
+	my ($ip, $name, $opts_ref) = @_;
+	my $exists = 0;
+	my $db = DBI->connect($dsn, $user, $pass) or die colored($DBI::errstr."\n", "bold red");
+	my $sql = "SELECT id FROM systems WHERE ipaddr='$ip' OR hostname='$name'";
+	my $sth = $db->prepare($sql) or die colored($DBI::errstr."\n", "bold red");
+	my $rtv = $sth->execute() or die colored($DBI::errstr."\n", "bold red");
+	print "RTV: "; print colored("$rtv \n", "bold green");
+	while (my @row = $sth->fetchrow_array()) {
+		chomp(@row);
+		if ((defined($row[0])) and ($row[0] ne 0)) {
+			$exists = 1;
+		}
+	}
+	$sth->finish() or die colored($DBI::errstr."\n", "bold red");
+	$db->disconnect() or die colored($DBI::errstr."\n", "bold red");
+	return $exists;
+}

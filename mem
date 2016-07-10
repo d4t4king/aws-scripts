@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+require 'sqlite3'
+
+output = %x(free -tom)
+
+#puts output.to_s
+
+lines = output.split(/\n/)
+
+t = Time.new
+mem = Hash.new
+swap = Hash.new
+lines.each do |line|
+	store = line.split(" ")[0]
+	case store 
+	when 'total'
+		next
+	when "Mem:"
+		mem[:used] = line.split(" ")[2]
+		mem[:free] = line.split(" ")[3]
+	when "Swap:"
+		swap[:used] = line.split(" ")[2]
+		swap[:free] = line.split(" ")[3]
+	end 
+	#puts stoore.to_s.green
+end
+
+mon = 0; day = 0; hour = 0; min = 0; sec = 0
+#if t.month < 10
+#	mon = "0#{t.month}"
+#else
+#	mon = t.month
+#end
+#if t.day < 10
+#	day = "0#{t.day}"
+#else
+#	day = t.day
+#end
+if t.hour < 10
+	hour = "0#{t.hour}"
+else
+	hour = t.hour
+end
+if t.min < 10
+	min = "0#{t.min}"
+else
+	min = t.min
+end
+if t.sec < 10
+	sec = "0#{t.sec}"
+else
+	sec = t.sec
+end
+dbdate = "#{t.year}-#{t.month}-#{t.day} #{hour}:#{min}:#{sec}"
+puts "#{dbdate}, #{mem[:used]}, #{swap[:used]}"
+
+begin
+	db = SQLite3::Database.open("/var/www/salt.dataking.us/db/mem.db")
+	db.execute("CREATE TABLE IF NOT EXISTS mem(id INTEGER PRIMARY KEY AUTOINCREMENT, date DATETIME, mem_used INTEGER, swap_used INTEGER)")
+	db.execute("INSERT INTO mem (date, mem_used, swap_used) VALUES ('#{dbdate}','#{mem[:used]}','#{swap[:used]}')")
+rescue SQLite3::Exception => e
+	puts "Exception occurred: #{e.message}".red
+ensure
+	db.close if db
+end
