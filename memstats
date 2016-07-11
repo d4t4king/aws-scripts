@@ -13,7 +13,7 @@ use Getopt::Long qw( :config no_ignore_case bundling );
 use Socket;
 use Date::Calc qw( Today_and_Now );
 
-my ($help,$verbose,$database,$user,$pass,$host);
+my ($help,$verbose,$database,$user,$pass,$host,$quiet,$config);
 $verbose = 0;
 GetOptions(
 	'h|help'		=>	\$help,
@@ -22,6 +22,8 @@ GetOptions(
 	'H|host=s'		=>	\$host,
 	'u|user=s'		=>	\$user,
 	'p|pass=s'		=>	\$pass,
+	'q|quiet'		=>	\$quiet,
+	'c|condig=s'	=>	\$config
 );
 
 $database	||= 'sysstats';
@@ -30,6 +32,7 @@ $host		||=	'salt.dataking.us';
 my $dsn = "dbi:mysql:database=$database;host=$host";
 
 if ((!defined($pass)) or ($pass eq '')) { die colored("Need the database password.  Use the '-p' option. \n", "bold red"); }
+die colored("Can't be quiet and verbose.  Choose one. \n", "bold red") if (($quiet) && ($verbose));
 
 my $hostname = &get_binary('hostname');
 my $iproute = &get_binary('ip');
@@ -41,17 +44,17 @@ print colored("Got $ip_addr for IP address. \n", "bold cyan") if ($verbose);
 
 unless (&host_exists($ip_addr, $fqdn)) {
 	# create the host, then
-	print "create host \n";
+	print "create host \n" unless ($quiet);;
 	my $rtv = &insert_host($ip_addr, $fqdn);
 	print colored("Got return value: $rtv \n","bold cyan") if ($verbose);
 } 
 my $hostid = &get_hostid($ip_addr, $fqdn);
 # insert the data
-print "insert data \n";
+print "insert data \n" unless ($quiet);
 my $meminfo = &get_meminfo;
-print Dumper($meminfo) if ($verbose);
+print Dumper($meminfo) if (($verbose) and ($verbose > 1));
 my $rtv = &insert_meminfo($hostid, $meminfo);
-print "Final return value: $rtv \n";
+print "Final return value: $rtv \n" if ($verbose);
 
 ###############################################################################
 # Subs
@@ -83,7 +86,7 @@ sub host_exists {
 	my $sql = "SELECT id FROM systems WHERE ipaddr='$ip' OR hostname='$name'";
 	my $sth = $db->prepare($sql) or die colored($DBI::errstr."\n", "bold red");
 	my $rtv = $sth->execute() or die colored($DBI::errstr."\n", "bold red");
-	print "RTV: "; print colored("$rtv \n", "bold green");
+	unless ($quiet) { print "RTV: "; print colored("$rtv \n", "bold green"); }
 	while (my @row = $sth->fetchrow_array()) {
 		chomp(@row);
 		if ((defined($row[0])) and ($row[0] ne 0)) {
@@ -123,7 +126,7 @@ sub insert_host {
 
 	my $sql = "INSERT INTO systems (ipaddr,hostname,vm,os) VALUES ('$ip','$name','$vm','$os')";
 	my $db = DBI->connect($dsn, $user, $pass) or die colored($DBI::errstr."\n", "bold red");
-	my $sth = $db->prepare($sql) or die colored($BI::errstr."\n", "hold red");;
+	my $sth = $db->prepare($sql) or die colored($DBI::errstr."\n", "hold red");;
 	my $rtv = $sth->execute() or die colored($DBI::errstr."\n", "bold red");
 	print "insert_host::rtv: $rtv \n";
 	$sth->finish();
