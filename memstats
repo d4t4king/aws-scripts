@@ -149,8 +149,9 @@ sub get_meminfo {
 	my @lines = split(/\n/, $raw_out);
 	foreach my $ln ( @lines ) {
 		given ($ln) {
-			when (/^(?:\s|\t)+total\s+used\s+free\s+shared\s+buffers\s+cached/) { next; }
-			when (/^(?:\s|\t)+total\s+used\s+free\s+shared\s+buff\/cache\s+available/) { next; }
+			when (/^(?:\s|\t)+total\s+used\s+free\s+shared\s+buffers\s+cached/) { 			next; }
+			when (/^(?:\s|\t)+total\s+used\s+free\s+shared\s+buff\/cache\s+available/) { 	next; }
+			when (/^\-\/\+\s+buffers\/cache\:\s+\d+\s+\d+/) {								next; }
 			when (/Mem:\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+).*/) {
 				my $t = $1; my $u = $2; my $f = $3; 
 				my $s = $4; my $b = $5; my $c = $6;
