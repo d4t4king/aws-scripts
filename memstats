@@ -104,9 +104,16 @@ sub get_hostid {
 	my $sql = "SELECT id FROM systems WHERE ipaddr='$ip' and hostname='$name'";
 	my $sth = $db->prepare($sql) or die colored($DBI::errstr."\n", "bold red");
 	my $rtv = $sth->execute();
-	my @row = $sth->fetchrow_array() or die colored($DBI::errstr."\n", "bold red");
-	chomp(@row);
-	return $row[0];
+	my $hostid = 0;
+	while (my @row = $sth->fetchrow_array()) {
+		chomp(@row);
+		if ((defined($row[0])) && ($row[0] ne '')) {
+			$hostid = $row[0];
+		} else { die colored("Didn't get a valid host id! \n", "bold red"); }
+	}
+	$sth->finish or die colored($DBI::errstr."\n", "bold red");
+	$db->disconnect or die colored($DBI::errstr."\n", "bold red");
+	return $hostid;
 }
 
 sub insert_host {
@@ -138,11 +145,12 @@ sub get_meminfo {
 	my %meminfo;
 
 	my $free = &get_binary('free');
-	my $raw_out = qx($free -ot);
+	my $raw_out = qx($free -t);
 	my @lines = split(/\n/, $raw_out);
 	foreach my $ln ( @lines ) {
 		given ($ln) {
 			when (/^(?:\s|\t)+total\s+used\s+free\s+shared\s+buffers\s+cached/) { next; }
+			when (/^(?:\s|\t)+total\s+used\s+free\s+shared\s+buff\/cache\s+available/) { next; }
 			when (/Mem:\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+).*/) {
 				my $t = $1; my $u = $2; my $f = $3; 
 				my $s = $4; my $b = $5; my $c = $6;
