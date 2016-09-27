@@ -88,7 +88,7 @@ case $OS in
 	"debian/ubuntu")
 		apt-get update && apt-get upgrade -y
 		# install some required packages
-		apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
+		apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct debsums arpwatch -y
 		;;
 	"gentoo")
 		eix-sync
