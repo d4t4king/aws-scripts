@@ -48,7 +48,11 @@ elif [ "${HOSTNAME}" == "oortcloud.dataking.us" ]; then
 else
 	scp ${TARBALL} 192.168.1.61:/opt/backups/${HOSTNAME}/
 fi
-rm -vf ${TARBALL}
+if [ $? == 0 ]; then
+	rm -vf ${TARBALL}
+else 
+	echo "Error during copy.  Skipping remove."
+fi
 if [ $HOSTNAME == "mercury.dataking.us" ]; then
 	/usr/local/bin/pd3000 "$1 backup on " "${HOSTNAME} compelte."
 fi
