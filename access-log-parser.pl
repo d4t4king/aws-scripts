@@ -22,8 +22,8 @@ GetOptions(
 my ($clientip, $datestring, $request, $httpstatus, $ua);
 my @unmatched;
 my (%clients, %countries, %requests, %requestips, %uaips);
-open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
-#open LOG, "</tmp/access_log" or die "Couldn't open access.log: $! \n";
+#open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
+open LOG, "</tmp/access_log" or die "Couldn't open access.log: $! \n";
 while (my $line = <LOG>) {
 	chomp($line);
 	next if ($line =~ /^$/);
