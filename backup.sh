@@ -6,7 +6,7 @@ TYPE=$2
 DATE=$(date '+%Y-%m-%d-%H-%M-%S')
 
 if [ "${TYPE}" = "root" ]; then
-	tar cvpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups /root
+	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups /root
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
@@ -18,7 +18,7 @@ if [ "${TYPE}" = "root" ]; then
 		echo "There was a problem with the backup."
 	fi
 elif [ "${TYPE}" = "home" ]; then
-	tar cvpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude="*.tar.gz" --exclude="*.tar.xz" --exclude="*.iso" /home
+	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude="*.tar.gz" --exclude="*.tar.xz" --exclude="*.iso" /home
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
@@ -30,7 +30,7 @@ elif [ "${TYPE}" = "home" ]; then
 		echo "There was a problem with the backup."
 	fi
 elif [ "${TYPE}" = "varetc" ]; then
-	tar cvpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude="/var/tmp/*" --exclude="/var/run/*" --exclude="/var/cache/*" /etc /var
+	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude="/var/tmp/*" --exclude="/var/run/*" --exclude="/var/cache/*" /etc /var
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
@@ -42,7 +42,7 @@ elif [ "${TYPE}" = "varetc" ]; then
 		echo "There was a problem with the backup."
 	fi
 elif [ "${TYPE}" = "full" ]; then
-	tar cvpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude ="/var/tmp/*" --exclude="/var/run/*" --exclude="/var/cache/*" --exclude="/tmp/*" --exclude="/dev/*" --exclude="/run/*" --exclude="/proc/*" --exclude="*.tar.gz" --exclude="*.tar.xz" /
+	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude ="/var/tmp" --exclude="/var/run" --exclude="/var/cache" --exclude="/tmp" --exclude="/dev" --exclude="/run" --exclude="/proc" --exclude="*.tar.gz" --exclude="*.tar.xz" --exclude="/var/spool" /
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
