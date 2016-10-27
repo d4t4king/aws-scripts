@@ -42,7 +42,7 @@ elif [ "${TYPE}" = "varetc" ]; then
 		echo "There was a problem with the backup."
 	fi
 elif [ "${TYPE}" = "full" ]; then
-	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude ="/var/tmp" --exclude="/var/run" --exclude="/var/cache" --exclude="/tmp" --exclude="/dev" --exclude="/run" --exclude="/proc" --exclude="*.tar.gz" --exclude="*.tar.xz" --exclude="/var/spool" /
+	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude ="/var/{tmp,run,cache.spool}/*" --exclude="/var/{tmp.run,cache,spool}" --exclude="/{tmp,dev,run,proc,sys}/*" --exclude="/{tmp,dev,run,proc,sys}" --exclude="*.tar.gz" --exclude="*.tar.xz" /
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
