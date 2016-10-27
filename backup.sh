@@ -41,7 +41,7 @@ elif [ "${TYPE}" = "varetc" ]; then
 	else
 		echo "There was a problem with the backup."
 	fi
-else
+elif [ "${TYPE}" = "full" ]; then
 	tar cvpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude ="/var/tmp/*" --exclude="/var/run/*" --exclude="/var/cache/*" --exclude="/tmp/*" --exclude="/dev/*" --exclude="/run/*" --exclude="/proc/*" --exclude="*.tar.gz" --exclude="*.tar.xz" /
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
@@ -53,4 +53,7 @@ else
 	else
 		echo "There was a problem with the backup."
 	fi
+else
+	echo "Unrecognized backup type."
+	exit 1
 fi
