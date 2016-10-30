@@ -13,7 +13,7 @@ fi
 if [ "${1}x" == "homex" ]; then
 	TARBALL="/tmp/home_${DATE}_${HOSTNAME}.tar.xz"
 	echo $TARBALL
-	tar cvfJ ${TARBALL} --exclude-backups --exclude "*.iso" /home/
+	tar cvfJ ${TARBALL} --exclude-backups --exclude="*.iso" --exclude="*.img" /home/
 elif [ "${1}x" == "varx" ]; then
 	TARBALL="/tmp/varetc_${DATE}_${HOSTNAME}.tar.xz"
 	echo $TARBALL
