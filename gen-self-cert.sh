@@ -11,14 +11,14 @@ fi
 
 pushd /tmp/
 
-openssl genrsa -aes256 -out ${SERVER}.key 2048
+openssl genrsa -aes256 -out ${SERVER}.key 4096
 
 openssl req -new -key ${SERVER}.key -out ${SERVER}.csr
 
 cp ${SERVER}.key ${SERVER}.key.org
 openssl rsa -in ${SERVER}.key.org -out ${SERVER}.key
 
-openssl x509 -req -days 365 -in ${SERVER}.csr -signkey ${SERVER}.key -out ${SERVER}.crt
+openssl x509 -req -days 1095 -in ${SERVER}.csr -signkey ${SERVER}.key -out ${SERVER}.crt
 
 # copy server.crt /etc/ssl/final_cert_name.pem
 # copy server.key /etc/ssl/final_cert_name.key
