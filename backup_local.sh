@@ -18,6 +18,7 @@ elif [ "${1}x" == "varx" ]; then
 	TARBALL="/tmp/varetc_${DATE}_${HOSTNAME}.tar.xz"
 	echo $TARBALL
 	if [ "${HOSTNAME}" == "luna" ]; then 
+		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude="/var/run/*" --exclude="/var/run" --exclude="/var/tmp/*" --exclude="/var/tmp" --exclude="/var/spool/*" --exclude="/var/spool" --exclude="/var/www/html/mirror/*" --exclude="/var/www/html/mirror" --exclude="/var/www/html/isos/*" --exclude="/var/www/html/isos" --exclude="/var/cache/*" --exclude="/var/cache" --exclude="/var/nullmailer/queue/*" --exclude="/var/nullmailer/queue" /var /etc
 	elif [ "${HOSTNAME}" == "mercury.dataking.us" ]; then
 		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude="/var/run/*" --exclude="/var/run" --exclude="/var/tmp/*" --exclude="/var/tmp" --exclude="/var/spool/*" --exclude="/var/spool" --exclude="/var/www/html/mirror/*" --exclude="/var/www/html/mirror" --exclude="/var/www/html/isos/*" --exclude="/var/www/html/isos" --exclude="/var/cache/*" --exclude="/var/cache" --exclude="/var/nullmailer/queue/*" --exclude="/var/nullmailer/queue" /var /etc
 	else
