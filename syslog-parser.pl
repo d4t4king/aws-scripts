@@ -54,15 +54,16 @@ while (my $sl = $parser->next) {
 				close FILE;
 			}
 		}
-		when (/ntpdate/) { }
-		when (/ntpd/) { }
-		when (/CRON/) { }
-		when (/acpid/) { }
-		when (/rsyslogd/) { }
-when (/psad/) { }
-		when (/pads/) { }
-		when (/\/usr\/sbin\/irqbalance/) { }
-		when (/pollinate/) { }
+		when (/ntpdate/) { 																								}
+		when (/ntpd/) { 																								}
+		when (/CRON/) { 																								}
+		when (/acpid/) { 																								}
+		when (/rsyslogd/) { 																							}
+		when (/psad/) { 																								}
+		when (/pads/) { 																								}
+		when (/\/usr\/sbin\/irqbalance/) { 																				}
+		when (/pollinate/) { 																							}
+		when (/NetworkManager/) {																						}
 		when (/cron(?:tab)?/) {
 			if ($sl->{'text'} =~ /(?:LIST|STARTUP|INFO)/) { }
 			else { print localtime($sl->{'timestamp'})." $sl->{'host'} $sl->{'program'} $sl->{'pid'} $sl->{'text'}\n"; }
@@ -82,7 +83,7 @@ when (/psad/) { }
 			}
 		}
 		default {
-			print "$sl->{'program'}: $sl->{'text'}\n";
+			print colored("$sl->{'program'}: $sl->{'text'}\n", "magenta");
 		}
 	}
 }
