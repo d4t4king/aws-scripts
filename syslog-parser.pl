@@ -35,24 +35,15 @@ while (my $sl = $parser->next) {
 			if ($sl->{'text'} =~ /(?:Connection timed out|Network is unreachable)/) {
 				#do nothing;
 			} else {
-				if ($sl->{'text'} =~ /to=<(.*)>, orig_to=<?(.*?)>?, relay=(.*?),\s*/) {
-					$to_mails{$1}{$2}++; $relays{$3}++;
-				} elsif ($sl->{'text'} =~ /to=<(.*)>, relay=(.*?),\s*/) {
-					$to_mails{$1}{'none'}++; $relays{$2}++;
-				} elsif ($sl->{'text'} =~ /NOQUEUE: reject: RCPT from .*\[(.*?)\]/) {
-					my $ip = $1;
-					#print color 'green'; print "$ip"; print color 'reset'; print "\n";
-					$smtp_relay_attempts{$ip}++;
-				} elsif ($sl->{'text'} =~ /(?:dis)?connect from /) {
-					# do nothing
-				} elsif ($sl->{'text'} =~ /warning: hostname/) {
-					# do nothing
-				} elsif ($sl->{'text'} =~ /warning: host aws1.dataking.us\[/) {
-					# do nothing
-				} elsif ($sl->{'text'} =~ /lost connection after (?:MAIL|CONNECT) from/) {
-					# do nothing 
-				} else {
-					print "$sl->{'program'}: $sl->{'text'}\n";
+				given  ($sl->{'text'}) {
+					when (/to=<(.*)>, orig_to=<?(.*?)>?, relay=(.*?),\s*/) { 	$to_mails{$1}{$2}++; $relays{$3}++; 		}
+					when (/to=<(.*)>, relay=(.*?),\s*/) { 						$to_mails{$1}{'none'}++; $relays{$2}++; 	}
+					when (/NOQUEUE: reject: RCPT from .*\[(.*?)\]/) { 			my $ip = $1; $smtp_relay_attempts{$ip}++; 	}
+					when (/(?:dis)?connect from /) { 																		} 	# do nothing 
+					when (/warning: hostname/) { 																			}	# do nothing
+					when (/warning: host aws1.dataking.us\[/) { 															}	# do nothing
+					when (/lost connection after (?:MAIL|CONNECT) from/) { 													} 	# do nothing 
+					default { print colored("$sl->{'program'}: $sl->{'text'}\n", "yellow"); }
 				}
 			}
 		}
@@ -63,15 +54,16 @@ while (my $sl = $parser->next) {
 				close FILE;
 			}
 		}
-		when (/ntpdate/) { }
-		when (/ntpd/) { }
-		when (/CRON/) { }
-		when (/acpid/) { }
-		when (/rsyslogd/) { }
-when (/psad/) { }
-		when (/pads/) { }
-		when (/\/usr\/sbin\/irqbalance/) { }
-		when (/pollinate/) { }
+		when (/ntpdate/) { 																								}
+		when (/ntpd/) { 																								}
+		when (/CRON/) { 																								}
+		when (/acpid/) { 																								}
+		when (/rsyslogd/) { 																							}
+		when (/psad/) { 																								}
+		when (/pads/) { 																								}
+		when (/\/usr\/sbin\/irqbalance/) { 																				}
+		when (/pollinate/) { 																							}
+		when (/NetworkManager/) {																						}
 		when (/cron(?:tab)?/) {
 			if ($sl->{'text'} =~ /(?:LIST|STARTUP|INFO)/) { }
 			else { print localtime($sl->{'timestamp'})." $sl->{'host'} $sl->{'program'} $sl->{'pid'} $sl->{'text'}\n"; }
@@ -91,7 +83,7 @@ when (/psad/) { }
 			}
 		}
 		default {
-			print "$sl->{'program'}: $sl->{'text'}\n";
+			print colored("$sl->{'program'}: $sl->{'text'}\n", "magenta");
 		}
 	}
 }

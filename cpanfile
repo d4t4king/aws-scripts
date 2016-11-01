@@ -1,0 +1,16 @@
+require 'DBI', 1.636;
+require 'DBD::Mysql', 4.038;
+require 'DBD::SQLite', 1.50;
+require 'Digest::MD5', 2.55;
+require 'Digest::SHA', 5.96;
+require 'Digest::Tiger', 0.0.3;
+require 'Geo::IP::PurePerl', 1.26;
+require 'IPTables::CHaineMgr', 1.5;
+require 'MIME::Lite', 3.030;
+require 'Net::IPv4Addr', 0.10;
+require 'Net::Nslookup', 2.04;
+require 'Parse::Syslog', 1.10;
+require 'Sort::Key::IPv4', 0.03;
+require 'URI::Encode', 1.1.1;
+require 'XML::Simple', 2.22;
+require 'YAML', 1.18;
