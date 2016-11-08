@@ -13,16 +13,16 @@ fi
 if [ "${1}x" == "homex" ]; then
 	TARBALL="/tmp/home_${DATE}_${HOSTNAME}.tar.xz"
 	echo $TARBALL
-	tar cvfJ ${TARBALL} --exclude-backups --exclude "*.iso" /home/
+	tar cvfJ ${TARBALL} --exclude-backups --exclude="*.iso" --exclude="*.img" /home/
 elif [ "${1}x" == "varx" ]; then
 	TARBALL="/tmp/varetc_${DATE}_${HOSTNAME}.tar.xz"
 	echo $TARBALL
 	if [ "${HOSTNAME}" == "luna" ]; then 
-		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue --exclude /var/www/html/mirror --exclude /var/www/html/isos --exclude /var/nullmailer/queue /var /etc
+		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude="/var/run/*" --exclude="/var/run" --exclude="/var/tmp/*" --exclude="/var/tmp" --exclude="/var/spool/*" --exclude="/var/spool" --exclude="/var/www/html/mirror/*" --exclude="/var/www/html/mirror" --exclude="/var/www/html/isos/*" --exclude="/var/www/html/isos" --exclude="/var/cache/*" --exclude="/var/cache" --exclude="/var/nullmailer/queue/*" --exclude="/var/nullmailer/queue" /var /etc
 	elif [ "${HOSTNAME}" == "mercury.dataking.us" ]; then
-		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue --exclude /var/www/html/mirror --exclude /var/www/html/isos --exclude /var/cache/apt/archive --exclude /var/nullmailer/queue /var /etc
+		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude="/var/run/*" --exclude="/var/run" --exclude="/var/tmp/*" --exclude="/var/tmp" --exclude="/var/spool/*" --exclude="/var/spool" --exclude="/var/www/html/mirror/*" --exclude="/var/www/html/mirror" --exclude="/var/www/html/isos/*" --exclude="/var/www/html/isos" --exclude="/var/cache/*" --exclude="/var/cache" --exclude="/var/nullmailer/queue/*" --exclude="/var/nullmailer/queue" /var /etc
 	else
-		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude /var/run --exclude /var/tmp --exclude /var/spool/clientmqueue --exclude /var/cache/apt/archive --exclude /var/nullmailer/queue /var /etc
+		tar cvfJ ${TARBALL} --exclude-backups --exclude-vcs --exclude="/var/run/*" --exclude="/var/run" --exclude="/var/tmp/*" --exclude="/var/tmp" --exclude="/var/spool/*" --exclude="/var/spool" --exclude="/var/cache/*" --exclude="/var/cache" --exclude="/var/nullmailer/queue/*" --exclude="/var/nullmailer/queue" /var /etc
 	fi
 else
 	# Skip any VMs for the full backup.  We should have gotten them in the "home" backup.
@@ -48,7 +48,11 @@ elif [ "${HOSTNAME}" == "oortcloud.dataking.us" ]; then
 else
 	scp ${TARBALL} 192.168.1.61:/opt/backups/${HOSTNAME}/
 fi
-rm -vf ${TARBALL}
+if [ $? == 0 ]; then
+	rm -vf ${TARBALL}
+else 
+	echo "Error during copy.  Skipping remove."
+fi
 if [ $HOSTNAME == "mercury.dataking.us" ]; then
 	/usr/local/bin/pd3000 "$1 backup on " "${HOSTNAME} compelte."
 fi

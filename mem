@@ -3,7 +3,7 @@
 require 'colorize'
 require 'sqlite3'
 
-output = %x(free -tom)
+output = %x(free -tm)
 
 #puts output.to_s
 

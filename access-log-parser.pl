@@ -17,11 +17,13 @@ GetOptions(
 	'nc|no-color'	=>	\$nocolor,
 );
 
+&usage if ($help);
+
 my ($clientip, $datestring, $request, $httpstatus, $ua);
 my @unmatched;
 my (%clients, %countries, %requests, %requestips, %uaips);
-open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
-#open LOG, "</tmp/access_log" or die "Couldn't open access.log: $! \n";
+#open LOG, "</var/log/nginx/access.log" or die "Couldn't open access.log: $! \n";
+open LOG, "</tmp/access_log" or die "Couldn't open access.log: $! \n";
 while (my $line = <LOG>) {
 	chomp($line);
 	next if ($line =~ /^$/);
@@ -191,4 +193,22 @@ sub add_ipt_block($) {
 		($rv, $out_arr, $errs_arr) = $ipt_obj->add_ip_rule($ip, '0.0.0.0/0', 1, 'filter', 'INPUT', 'LOGNDROP', {});
 		return $rv;
 	}
+}
+
+sub usage {
+
+	print <<END;
+
+$0 -h|--help -nc|--nocolor
+
+This script parses the active access log.
+
+Options:
+
+-h|--help				Displays this useful message then exits.
+-nc|--nocolor				Turns off the color display.  This is useful for redirecting output, or running from cron.
+
+END
+
+	exit 0;
 }
