@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+require 'date'
+require 'sqlite3'
+
+count = 0
+now = DateTime.now
+File.open("/var/log/syslog").each_line do |line|
+	line.chomp!
+	if line =~ /iptables-input-denied/
+		# May  5 23:24:39
+		if line =~ /(\w+)\s+(\d\d?)\s(\d\d\:\d\d\:\d\d)/
+			lmon = $1
+			lday = $2
+			ltime = $3
+			(h, m, s) = ltime.to_s.split(/\:/)
+			if now.hour.to_s == h.to_s
+				count += 1
+				puts "Win!".green
+			else
+				puts "Fail!".red
+			end
+		end
+	end
+end
+
+puts "#{now.to_s}: #{count.to_s}"
+
+begin 
+	db = SQLite3::Database.open "/var/www/salt.dataking.us/db/fw-stats.db"
+	db.execute "CREATE TABLE IF NOT EXISTS fwstats (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATETIME, hits INTEGER)"
+	db.execute "INSERT INTO fwstats ('date', 'hits') VALUES('#{now.to_s}','#{count.to_s}')"
+rescue SQLite3::Exception => sqle
+	puts "Exception occurred"
+	puts sqle.message
+ensure
+	db.close if db
+end
