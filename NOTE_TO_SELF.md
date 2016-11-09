@@ -2,3 +2,5 @@
 * Make access-countries.pl silent, unless there's a real problem.
 * Make mem silent unless there's a real problem.
 * Make fw-stats silent unless there's a real problem.
+* Make backup scripts silent unless problem.
+
