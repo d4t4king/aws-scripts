@@ -1,6 +1,5 @@
-* Make syscheck (or Monitors) know whether it's running on a VM or not so temps, and smartmon become irrelevant.
-* Make access-countries.pl silent, unless there's a real problem.
-* Make mem silent unless there's a real problem.
-* Make fw-stats silent unless there's a real problem.
-* Make backup scripts silent unless problem.
-
+ - [ ] Make syscheck (or Monitors) know whether it's running on a VM or not so temps, and smartmon become irrelevant.
+ - [ ] Make access-countries.pl silent, unless there's a real problem.
+ - [ ] Make mem silent unless there's a real problem.
+ - [ ] Make fw-stats silent unless there's a real problem.
+ - [ ] Make backup scripts silent unless problem.
