@@ -78,10 +78,10 @@ foreach my $c ( sort(keys(%ccs)) ) {
 		if (exists($records{$ip})) {
 			my $total = $ccs{$c}{$ip} + $records{$ip};
 			my $ec = system("sqlite3 /www/db/countries.db \"update countries set hitcount=$total where ip='$ip';\"");
-			print "===> $ec <===\n";
+			print "===> $ec <===\n" if ($verbose);
 		} else {
 			my $ec = system("sqlite3 /www/db/countries.db \"insert into countries (ip, country_code, country_name, hitcount) values( '$ip', '$c', '$cns{$c}', '$ccs{$c}{$ip}')\";");
-			print "===< $ec >===\n";
+			print "===< $ec >===\n" if ($verbose);
 		}
 	}
 }
