@@ -17,9 +17,9 @@ File.open("/var/log/syslog").each_line do |line|
 			(h, m, s) = ltime.to_s.split(/\:/)
 			if now.hour.to_s == h.to_s
 				count += 1
-				puts "Win!".green
-			else
-				puts "Fail!".red
+		#		puts "Win!".green
+		#	else
+		#		puts "Fail!".red
 			end
 		end
 	end
@@ -32,8 +32,8 @@ begin
 	db.execute "CREATE TABLE IF NOT EXISTS fwstats (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATETIME, hits INTEGER)"
 	db.execute "INSERT INTO fwstats ('date', 'hits') VALUES('#{now.to_s}','#{count.to_s}')"
 rescue SQLite3::Exception => sqle
-	puts "Exception occurred"
-	puts sqle.message
+	puts "Exception occurred: "
+	raise sqle
 ensure
 	db.close if db
 end
