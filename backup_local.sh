@@ -36,7 +36,7 @@ else
 	fi
 fi
 
-if [ $HOSTNAME == "mercury.dataking.us" ]; then
+if [ "${HOSTNAME}" == "mercury.dataking.us" ]; then
 	/usr/local/bin/pd3000 "Backup complete." "Copying to storage..."
 fi
 if [ "${HOSTNAME}" == "jupiter.dataking.us" -o "${HOSTNAME}" == "neptune.dataking.us" ]; then
