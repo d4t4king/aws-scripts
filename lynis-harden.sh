@@ -143,6 +143,7 @@ echo "Setting sysctl options..."
 echo "# Additional hardening settings, based on Lynis audit." >> /etc/sysctl.conf
 sysctl_update "kernel.core_uses_pid" "1"
 sysctl_update "kernel.sysrq" "0"
+sysctl_update "kernel.kptr_restrict" "2"
 sysctl_update "net.ipv4.conf.all.rp_filter" "1"
 sysctl_update "net.ipv4.conf.default.accept_redirects" "0"
 sysctl_update "net.ipv4.conf.all.accept_redirects" "0"
