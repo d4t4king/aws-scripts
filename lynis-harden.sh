@@ -11,11 +11,11 @@ sysctl_update() {
 	# 	sysctl key to be changed ($1)
 	# 	status ($2 -- on or off)
 	KEY=$1; STATUS=$2;
-	sysctl ${KEY}=${STATUS}
+	sysctl "${KEY} = ${STATUS}"
 	grep "${KEY}" /etc/sysctl.conf > /dev/null
 	if [ $? == 1 ]; then
 		#KEY=$(echo "${KEY}" | awk -F= '{ print $1 }')
-		echo "${KEY}=${STATUS}" >> /etc/sysctl.conf
+		echo "${KEY} = ${STATUS}" >> /etc/sysctl.conf
 	else 
 		case ${STATUS} in
 			1)
@@ -28,7 +28,7 @@ sysctl_update() {
 				echo "Unexpected status. (${STATUS})"
 				;;
 		esac
-		sed -i -e "s/\("${KEY}"\) \?= \?"${ONFF}"/\1="${STATUS}"/" /etc/sysctl.conf
+		sed -i -e "s/\("${KEY}"\) \?= \?"${ONFF}"/\1 = "${STATUS}"/" /etc/sysctl.conf
 	fi
 #set +x
 }
