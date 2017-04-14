@@ -91,7 +91,7 @@ case $OS in
 		#apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
-		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb apt-listbugs debian-goodies debscan debsums -y
+		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb apt-listbugs debian-goodies debsecan debsums -y
 		;;
 	"gentoo")
 		eix-sync
