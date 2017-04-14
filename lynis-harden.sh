@@ -89,7 +89,9 @@ case $OS in
 		apt-get update && apt-get upgrade -y
 		# install some required packages
 		#apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
-		apt-get install libpam-cracklib apt-show-versions -y
+		#apt-get install libpam-cracklib apt-show-versions -y
+		# 4/12/2017 -- 
+		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb apt-listbugs debian-goodies debscan debsums -y
 		;;
 	"gentoo")
 		eix-sync
