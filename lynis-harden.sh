@@ -11,11 +11,11 @@ sysctl_update() {
 	# 	sysctl key to be changed ($1)
 	# 	status ($2 -- on or off)
 	KEY=$1; STATUS=$2;
-	sysctl ${KEY}=${STATUS}
+	sysctl "${KEY} = ${STATUS}"
 	grep "${KEY}" /etc/sysctl.conf > /dev/null
 	if [ $? == 1 ]; then
 		#KEY=$(echo "${KEY}" | awk -F= '{ print $1 }')
-		echo "${KEY}=${STATUS}" >> /etc/sysctl.conf
+		echo "${KEY} = ${STATUS}" >> /etc/sysctl.conf
 	else 
 		case ${STATUS} in
 			1)
@@ -28,7 +28,7 @@ sysctl_update() {
 				echo "Unexpected status. (${STATUS})"
 				;;
 		esac
-		sed -i -e "s/\("${KEY}"\) \?= \?"${ONFF}"/\1="${STATUS}"/" /etc/sysctl.conf
+		sed -i -e "s/\("${KEY}"\) \?= \?"${ONFF}"/\1 = "${STATUS}"/" /etc/sysctl.conf
 	fi
 #set +x
 }
@@ -89,7 +89,9 @@ case $OS in
 		apt-get update && apt-get upgrade -y
 		# install some required packages
 		#apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
-		apt-get install libpam-cracklib apt-show-versions -y
+		#apt-get install libpam-cracklib apt-show-versions -y
+		# 4/12/2017 -- 
+		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb apt-listbugs debian-goodies debsecan debsums -y
 		;;
 	"gentoo")
 		eix-sync
@@ -143,7 +145,10 @@ echo "Setting sysctl options..."
 echo "# Additional hardening settings, based on Lynis audit." >> /etc/sysctl.conf
 sysctl_update "kernel.core_uses_pid" "1"
 sysctl_update "kernel.sysrq" "0"
+sysctl_update "kernel.kptr_restrict" "2"
 sysctl_update "net.ipv4.conf.all.rp_filter" "1"
+sysctl_update "net.ipv4.conf.default" "1"
+sysctl_update "net.ipv4.conf.all.accept_redirects" "0"
 sysctl_update "net.ipv4.conf.default.accept_redirects" "0"
 sysctl_update "net.ipv4.conf.all.accept_redirects" "0"
 sysctl_update "net.ipv4.conf.all.log_martians" "1"
