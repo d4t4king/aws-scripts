@@ -87,12 +87,28 @@ case $# in
 		;;
 	3)
 		echo "Got 3 arguments: $1 , $2 and $3"
-		if ! [ "$2" =~ "$year_rgx" -a "$3" =~ "$num_rgx" ]; then
+		if ! [[ $2 =~ $year_rgx ]] && [[ $3 =~ $num_rgx ]]; then
 			echo "Didn't get valid options: YEAR: $2 MONTH: $3"
 			exit 2
 		else
 			# start with the 0 padded numbers
 			for D in $(seq 1 9); do
+				FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${3}-0${D}.tar.xz)
+				if [ "$FILE" == "" ]; then
+					echo "File not exist (${1}-${2}-${3}-0${D}.tar.xz)"
+				else
+					aws s3 cp s3://dk-website-backup/${1}-${2}-${3}-0${D}.tar.xz /tmp/
+					scp -P 3333 /tmp/${1}-${2}-${3}-0${D}.tar.xz dataking.us:/opt/backups/$1/
+					if [ $? == 0 ]; then
+						rm -vf /tmp/${1}-${2}-${3}-0${D}.tar.xz
+						aws s3 rm s3://dk-website-backups/$1/${1}-${2}-${3}-0${D}.tar.xz
+					else
+						echo "There was a problem with the copy.  Aborting."
+						exit 1
+					fi
+				fi
+			done
+			for D in $(seq 10 31); do
 				FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${3}-${D}.tar.xz)
 				if [ "$FILE" == "" ]; then
 					echo "File not exist (${1}-${2}-${3}-${D}.tar.xz)"
