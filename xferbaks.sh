@@ -17,7 +17,7 @@ case $# in
 				# same for days: start with single
 				# digits but must be 0 padded
 				for D in $(seq 1 9); do
-					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-0${M}-0${D}.tar.xz)
+					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-0${M}-0${D}.tar.xz | awk '{ print $4 }')
 					if [ "$FILE" == "" ]; then
 						echo "File not exist (${1}-${2}-0${M}-0${D}.tar.xz)"
 					else
@@ -33,7 +33,7 @@ case $# in
 					fi
 				done
 				for D in $(seq 10 31); do
-					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-0${M}-${D}.tar.xz)
+					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-0${M}-${D}.tar.xz | awk '{ print $4 }')
 					if [ "$FILE" == "" ]; then
 						echo "File not exist (${1}-${2}-0${M}-${D}.tar.xz)"
 					else
@@ -51,7 +51,7 @@ case $# in
 			done
 			for M in 10 11 12; do
 				for D in $(seq 1 9); do
-					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${M}-0${D}.tar.xz)
+					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${M}-0${D}.tar.xz | awk '{ print $4 }')
 					if [ "$FILE" == "" ]; then
 						echo "File not exist (${1}-${2}-${M}-0${D}.tar.xz)"
 					else
@@ -67,7 +67,7 @@ case $# in
 					fi
 				done
 				for D in $(seq 10 31); do
-					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${M}-${D}.tar.xz)
+					FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${M}-${D}.tar.xz | awk '{ print $4 }')
 					if [ "$FILE" == "" ]; then
 						echo "File not exist (${1}-${2}-${M}-${D}.tar.xz)"
 					else
@@ -93,11 +93,12 @@ case $# in
 		else
 			# start with the 0 padded numbers
 			for D in $(seq 1 9); do
-				FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${3}-0${D}.tar.xz)
+				FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${3}-0${D}.tar.xz | awk '{ print $4 }')
+				echo "PATH/FILE: s3://dk-website-backups/$1/$FILE"
 				if [ "$FILE" == "" ]; then
 					echo "File not exist (${1}-${2}-${3}-0${D}.tar.xz)"
 				else
-					aws s3 cp s3://dk-website-backup/${1}-${2}-${3}-0${D}.tar.xz /tmp/
+					aws s3 cp s3://dk-website-backups/$1/${1}-${2}-${3}-0${D}.tar.xz /tmp/
 					scp -P 3333 /tmp/${1}-${2}-${3}-0${D}.tar.xz dataking.us:/opt/backups/$1/
 					if [ $? == 0 ]; then
 						rm -vf /tmp/${1}-${2}-${3}-0${D}.tar.xz
@@ -109,11 +110,12 @@ case $# in
 				fi
 			done
 			for D in $(seq 10 31); do
-				FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${3}-${D}.tar.xz)
+				FILE=$(aws s3 ls s3://dk-website-backups/$1/${1}-${2}-${3}-${D}.tar.xz | awk '{ print $4 }')
+				echo "PATH/FILE: s3://dk-website-backups/$1/$FILE"
 				if [ "$FILE" == "" ]; then
 					echo "File not exist (${1}-${2}-${3}-${D}.tar.xz)"
 				else
-					aws s3 cp s3://dk-website-backup/${1}-${2}-${3}-${D}.tar.xz /tmp/
+					aws s3 cp s3://dk-website-backups/$1/${1}-${2}-${3}-${D}.tar.xz /tmp/
 					scp -P 3333 /tmp/${1}-${2}-${3}-${D}.tar.xz dataking.us:/opt/backups/$1/
 					if [ $? == 0 ]; then
 						rm -vf /tmp/${1}-${2}-${3}-${D}.tar.xz
