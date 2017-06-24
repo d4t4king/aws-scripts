@@ -5,7 +5,7 @@ tar cvpfJ /tmp/www.dataking.technology-${DATE}.tar.xz --directory /root/ /usr/sh
 if [ $? -eq 0 ]; then
 	# old method
 	#scp -P 2222 /root/www.dataking.technology-${DATE}.tar.xz root@vhome.dataking.us:/media/sf_backups/
-	aws s3 cp /tmp/www.dataking.technology-${DATE}.tar.xz s3://dk-website-backups/dataking.technology/
+	aws s3 cp /tmp/www.dataking.technology-${DATE}.tar.xz s3://dk-website-backups/www.dataking.technology/
 	if [ $? -eq 0 ]; then
 		rm -f /tmp/www.dataking.technology-${DATE}.tar.xz
 	else
