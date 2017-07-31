@@ -22,7 +22,7 @@ begin
 				to_write[:malware] = Array.new
 			end
 			to_write[:malware].push(row[0])
-		when /(?:ByZr|ZmEu)/
+		when /(?:ByZr|ZmEu|Mozilla\/5\.0 zgrab\/0\.x|Telesphoreo)/
 			puts "malware".green
 			unless to_write[:malware].kind_of?(Array)
 				to_write[:malware] = Array.new
@@ -64,6 +64,12 @@ begin
 				to_write[:bot] = Array.new
 			end
 			to_write[:bot].push(row[0])
+		when /check_http\/v\d\.\d \(nagios\-plugins\s+\d\.\d\)/
+			puts "automaton".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
 		when /^\(\)\s*\{\s*[a-z:]+;\s*\};.*/
 			puts "shellshock".green
 			unless to_write[:shellshock].kind_of?(Array)
@@ -76,6 +82,12 @@ begin
 				to_write[:mobile] = Array.new
 			end
 			to_write[:mobile].push(row[0])
+		when /WEBDAV Client/
+			puts "automaton".green
+			unless to_write[:automaton].kind_of?(Array)
+				to_write[:automaton] = Array.new
+			end
+			to_write[:automaton].push(row[0])
 		when /Go 1.1 package http/
 			puts "Go".green
 			#puts "\t#{row[0]}".green
