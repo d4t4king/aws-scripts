@@ -14,7 +14,7 @@ while (my $line = <IN>) {
 	push @template, $line;
 	$template{$line}++;
 }
-close IN or die "Could not close templat file: $! \n";
+close IN or die "Could not close template file: $! \n";
 
 # get the local rules
 my @iptables = `/sbin/iptables-save`;
