@@ -35,8 +35,20 @@ sub get_localnet {
 }
 
 sub get_listening {
+	my @list;
 	my $out = qx/netstat -anp4 2>&1 | grep LISTEN/;
 	chomp($out);
+	my @lines = split(/\n/, $out);
+	#print Dumper(\@lines);
+	foreach my $l ( @lines ) {
+		if ($l =~ /^(tcp|udp)\s+\d+\s+\d+\s+[0-9a-zA-F:.]+\:(\d+)\s+/) {
+			my $proto = $1; my $port = $2;
+			push @list, "$proto:$port";
+		} else {
+			warn "netstat line didn't match regex!";
+		}
+	}
+	return @list;
 }
 
 print "TimeStamp: ".strftime("%Y%m%d%H%M%S", localtime())."\n";
@@ -44,6 +56,7 @@ my $stamp = strftime("%Y%m%d%H%M%S", localtime());
 
 
 my @listening = &get_listening();
+print Dumper(\@listening);
 
 if ($show) {
 	# backup any existing iptables rules
@@ -73,17 +86,27 @@ if ($show) {
 	}
 	# send NEW UDP traffic to the UDP chain
 	push @commands, "-A INPUT -p udp -m conntrack --ctstate NEW -j UDP";
+	foreach my $l ( @listening ) {
+		next unless ($l =~ /^udp/);
+		my ($proto,$port) = split(/\:/, $l);
+		push @commands, "-A UDP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT";
+	}
 	# return to INPUT
 	push @commands, "-A UDP -j RETURN";
 	# send NEW TCP traffic to the TCP chain
 	push @commands, "-A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP";
+	foreach my $l ( @listening ) {
+		next unless ($l =~ /^tcp/);
+		my ($proto,$port) = split(/\:/, $l);
+		push @commands, "-A TCP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT";
+	}
 	# return to INPUT
 	push @commands, "-A TCP -j RETURN";
 	# send all remaining traffic to the LOGGING chain
 	push @commands, "-A INPUT -j LOGGING";
 	# log them
 	#system("$iptables -A LOGGING -m limit --limit 10/min -j LOG --log-prefix \"IPTables-Dropped: \" --log-level 4");
-	push @commands, "-A LOGGING -m limit --limit 10/min -j LOG --log-prefix \"IPTables-Dropped: \" --log-level 4";
+	push @commands, "-A LOGGING -m limit --limit 10/min -j LOG --log-prefix \"IPTables-Dropped: \" --log-level info";
 	# drop it like it's hot...
 	push @commands, "-A LOGGING -j DROP";
 	
@@ -108,9 +131,20 @@ if ($do) {
 		system("$iptables -A INPUT -p icmp --icmp-type 8 -m conntrack --ctstate NEW -j ACCEPT");
 	}
 	system("$iptables -A INPUT -p udp -m conntrack --ctstate NEW -j UDP");
+	foreach my $l ( @listening ) {
+		next unless ($l =~ /^udp/);
+		my ($proto,$port) = split(/\:/, $l);
+		system("$iptables -A UDP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT");
+	}
 	system("$iptables -A UDP -j RETURN");
 	system("$iptables -A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP");
+	foreach my $l ( @listening ) {
+		next unless ($l =~ /^tcp/);
+		my ($proto,$port) = split(/\:/, $l);
+		system("$iptables -A TCP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT");
+	}
 	system("$iptables -A TCP -j RETURN");
 	system("$iptables -A INPUT -j LOGGING");
+	system("$iptables -A LOGGING -m limit --limit 10/min -j LOG --log-prefix \"IPTables-Dropped: \" --log-level info");
 	system("$iptables -A LOGGING -j DROP");
 }
