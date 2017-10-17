@@ -34,9 +34,16 @@ sub get_localnet {
 	return $localnet;
 }
 
+sub get_listening {
+	my $out = qx/netstat -anp4 2>&1 | grep LISTEN/;
+	chomp($out);
+}
+
 print "TimeStamp: ".strftime("%Y%m%d%H%M%S", localtime())."\n";
 my $stamp = strftime("%Y%m%d%H%M%S", localtime());
 
+
+my @listening = &get_listening();
 
 if ($show) {
 	# backup any existing iptables rules
