@@ -51,7 +51,7 @@ sub get_listening {
 			# 1) Anything listening on localhost isn't really listening on the network,
 			#	therefore, it doesn't need a port opened.
 			# 2) Anything listening on localhost should get ACCEPT'ed by the lo rule.
-			next if ($ip eq '127.0.0.1');
+			next if ($ip =~ /127\.0\.[01]\.1/);
 			push @list, "$proto:$port";
 		} else {
 			warn "netstat line didn't match regex!";
