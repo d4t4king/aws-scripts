@@ -15,6 +15,8 @@ GetOptions(
 
 my $iptables = qx/which iptables/;
 chomp($iptables);
+my $iptables_save = qx/which iptables-save/;
+chomp($iptables_save);
 
 my @commands;
 
@@ -23,7 +25,10 @@ sub get_localnet {
 	my $localnet = '';
 	my @ifaces = IO::Interface::Simple->interfaces;
 	foreach my $iface ( @ifaces ) {
-		next if $iface->address =~ /127\.0\.0/;
+		# localhost is not localnet
+		next if ((defined($iface->address)) and ($iface->address =~ /127\.0\.0/));
+		# skip interface without an assigned IP
+		next if (!defined($iface->address));
 		print "Interface: ".$iface->name."\n";
 		print "Addr: ".$iface->address."\n";
 		print "Netmask: ".$iface->netmask."\n";
@@ -41,8 +46,12 @@ sub get_listening {
 	my @lines = split(/\n/, $out);
 	#print Dumper(\@lines);
 	foreach my $l ( @lines ) {
-		if ($l =~ /^(tcp|udp)\s+\d+\s+\d+\s+[0-9a-zA-F:.]+\:(\d+)\s+/) {
-			my $proto = $1; my $port = $2;
+		if ($l =~ /^(tcp|udp)\s+\d+\s+\d+\s+([0-9.]+)\:(\d+)\s+/) {
+			my $proto = $1; my $ip = $2; my $port = $3;
+			# 1) Anything listening on localhost isn't really listening on the network,
+			#	therefore, it doesn't need a port opened.
+			# 2) Anything listening on localhost should get ACCEPT'ed by the lo rule.
+			next if ($ip eq '127.0.0.1');
 			push @list, "$proto:$port";
 		} else {
 			warn "netstat line didn't match regex!";
@@ -60,7 +69,7 @@ print Dumper(\@listening);
 
 if ($show) {
 	# backup any existing iptables rules
-	push @commands, "iptables-save > basicfw_backup_$stamp";
+	push @commands, "$iptables_save > basicfw_backup_$stamp";
 	# Flush and zeroize the foundation tables/chains
 	push @commands, "-Z";
 	push @commands, "-F";
@@ -115,6 +124,7 @@ if ($show) {
 
 if ($do) {
 	#iptables-save > basic-fw-backup_YYYYMMDDHHmmss
+	system("$iptables_save > basic-fw-backup_$stamp");
 	system("$iptables -Z");
 	system("$iptables -F");
 	system("$iptables -N TCP");
