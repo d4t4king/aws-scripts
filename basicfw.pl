@@ -41,7 +41,7 @@ sub get_localnet {
 
 sub get_listening {
 	my @list;
-	my $out = qx/netstat -anp4 2>&1 | grep LISTEN/;
+	my $out = qx/netstat -anp4 2>&1 | grep -v -E "(ESTABLISHED|TIME_WAIT)"/;
 	chomp($out);
 	my @lines = split(/\n/, $out);
 	#print Dumper(\@lines);
@@ -51,7 +51,7 @@ sub get_listening {
 			# 1) Anything listening on localhost isn't really listening on the network,
 			#	therefore, it doesn't need a port opened.
 			# 2) Anything listening on localhost should get ACCEPT'ed by the lo rule.
-			next if ($ip =~ /127\.0\.[01]\.1/);
+			next unless ($ip =~ /0\.0\.0\.0/);
 			push @list, "$proto:$port";
 		} else {
 			warn "netstat line didn't match regex!";
