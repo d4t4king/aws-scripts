@@ -30,7 +30,7 @@ elif [ "${TYPE}" = "home" ]; then
 		echo "There was a problem with the backup."
 	fi
 elif [ "${TYPE}" = "varetc" ]; then
-	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude="/var/tmp/*" --exclude="/var/run/*" --exclude="/var/cache/*" /etc /var
+	tar cpfJ /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude="/var/tmp" --exclude="/var/tmp/*" --exclude="/var/run" --exclude="/var/run/*" --exclude="/var/cache" --exclude="/var/cache/*" --exclude="/var/lib/lxcfs" --exclude="/var/lib/lxcfs/*" --exclude="/var/spool" --exclude="/var/spool/*" --exclude="/var/agentx/master" --exclude="/var/lib/clamav" --exclude="/var/lib/lxd/unix.socket" --exclude="/var/lib/mysql/ib_logfile0" /etc /var
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
