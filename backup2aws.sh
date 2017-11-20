@@ -55,5 +55,6 @@ elif [ "${TYPE}" = "full" ]; then
 	fi
 else
 	echo "Unrecognized backup type."
+	echo "Usage: ${0} hostname backup-type"
 	exit 1
 fi
