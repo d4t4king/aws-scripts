@@ -13,6 +13,9 @@ GetOptions(
 	'--show'	=>	\$show,
 );
 
+if ((!$do) and (!$show)) {
+    die "You must specify either the --do or --show option"
+}
 my $iptables = qx/which iptables/;
 chomp($iptables);
 my $iptables_save = qx/which iptables-save/;
