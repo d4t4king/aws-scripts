@@ -67,7 +67,8 @@ case $OS in
 		;;
 	"redhat/centos")
 		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
-			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+			#smtpd_banner = $myhostname ESMTP $mail_name
+			sed -i -e 's/#\?\(smtpd_banner = \$myhostname ESMTP\) $mail_name/\1/' /etc/postfix/main.cf
 			systemctl restart postfix
 		else
 			echo "Postfix config file not found."
@@ -114,7 +115,7 @@ case $OS in
 		;;
 	"redhat/centos")
 		yum update -y
-		yum install arpwatch aide rkhunter
+		yum install arpwatch aide rkhunter -y
 		;;
 	"gentoo")
 		eix-sync
@@ -214,12 +215,12 @@ fi
 
 echo -n "Modding sshd_config..."
 sed -i -e 's/#\?\(AllowTcpForwarding\) yes/\1 no/' /etc/ssh/sshd_config
-sed -i -e 's/#\?\(AllowAgentForwarding\) yes/\1 no' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(AllowAgentForwarding\) yes/\1 no/' /etc/ssh/sshd_config
 sed -i -e 's/#\?\(MaxAuthTries\) 6/\1 2/' /etc/ssh/sshd_config
 sed -i -e 's/#\?\(MaxSessions\) 10/\1 2/' /etc/ssh/sshd_config
 sed -i -e 's/#\?\(ClientAliveCountMax\) 3/\1 2/' /etc/ssh/sshd_config
 sed -i -e 's/#\?\(Compression\) yes/\1 DELAYED/' /etc/ssh/sshd_config
-echo "done.
+echo "done."
 
 echo "Script done."
 
