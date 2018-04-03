@@ -68,7 +68,7 @@ case $OS in
 	"redhat/centos")
 		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
 			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
-			/etc/init.d/postfix reload
+			systemctl restart postfix
 		else
 			echo "Postfix config file not found."
 		fi
@@ -184,7 +184,7 @@ sysctl_update "net.ipv4.tcp_timestamps" "0"
 sysctl_update "net.ipv6.conf.all.accept_redirects" "0"
 sysctl_update "net.ipv6.conf.default.accept_redirects" "0"
 
-echo "Adding keywords to banner files..."
+echo -n "Adding keywords to banner files..."
 grep "access authorized legal" /etc/issue > /dev/null
 if [ ! $? -eq 0 ]; then
 	echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue
@@ -193,6 +193,7 @@ grep "access authorized legal" /etc/issue.net > /dev/null
 if [ ! $? -eq 0 ]; then
 	echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue.net
 fi
+echo "done."
 
 if [ -e /etc/modprobe.d/blacklist-firewire.conf -a ! -z /etc/modprobe.d/blacklist-firewire.conf ]; then
 	echo "Disabling firewire..."
@@ -210,6 +211,15 @@ if [ ! $? -eq 0 ]; then
 	echo "Disabling USB storage..."
 	echo "install usb-storage /bin/true" >> /etc/modprobe.conf
 fi
+
+echo -n "Modding sshd_config..."
+sed -i -e 's/#\?\(AllowTcpForwarding\) yes/\1 no/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(AllowAgentForwarding\) yes/\1 no' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(MaxAuthTries\) 6/\1 2/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(MaxSessions\) 10/\1 2/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(ClientAliveCountMax\) 3/\1 2/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(Compression\) yes/\1 DELAYED/' /etc/ssh/sshd_config
+echo "done.
 
 echo "Script done."
 
