@@ -56,15 +56,24 @@ done
 echo "Updating postfix config..."
 case $OS in 
 	"debian/ubuntu")
-		sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+			/etc/init.d/postfix reload
+		else
+			echo "Postfix config file not found."
+		fi
 		;;
 	"gentoo")
-		sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
+		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+			sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
+			/etc/init.d/postfix reload
+		else
+			echo "Postfix config file not found."
+		fi
 		;;
 	*)
 	;;
 esac
-/etc/init.d/postfix reload
 
 # Given some testing, this has a tendency to break stuff.
 # default umasks
