@@ -37,6 +37,8 @@ if [ -e /etc/gentoo-release -a ! -z /etc/gentoo-release ]; then
 	OS="gentoo"
 elif [ -e /etc/debian_version -a ! -z /etc/debian_version ]; then
 	OS="debian/ubuntu"
+elif [ -e /etc/centos-release -a ! -z /etc/centos-release ]; then
+	OS='redhat/centos'
 else
 	OS="unknown"
 fi
@@ -56,6 +58,14 @@ done
 echo "Updating postfix config..."
 case $OS in 
 	"debian/ubuntu")
+		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+			/etc/init.d/postfix reload
+		else
+			echo "Postfix config file not found."
+		fi
+		;;
+	"redhat/centos")
 		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
 			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
 			/etc/init.d/postfix reload
@@ -101,6 +111,10 @@ case $OS in
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
 		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb apt-listbugs debian-goodies debsecan debsums -y
+		;;
+	"redhat/centos")
+		yum update -y
+		yum install arpwatch aide rkhunter
 		;;
 	"gentoo")
 		eix-sync
