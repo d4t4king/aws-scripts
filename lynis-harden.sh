@@ -37,6 +37,8 @@ if [ -e /etc/gentoo-release -a ! -z /etc/gentoo-release ]; then
 	OS="gentoo"
 elif [ -e /etc/debian_version -a ! -z /etc/debian_version ]; then
 	OS="debian/ubuntu"
+elif [ -e /etc/centos_version -a ! -z /etc/centos_version ]; then
+	OS="centos/redhat"
 else
 	OS="unknown"
 fi
