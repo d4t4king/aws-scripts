@@ -58,15 +58,33 @@ done
 echo "Updating postfix config..."
 case $OS in 
 	"debian/ubuntu")
-		sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+			/etc/init.d/postfix reload
+		else
+			echo "Postfix config file not found."
+		fi
+		;;
+	"redhat/centos")
+		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+			#smtpd_banner = $myhostname ESMTP $mail_name
+			sed -i -e 's/#\?\(smtpd_banner = \$myhostname ESMTP\) $mail_name/\1/' /etc/postfix/main.cf
+			systemctl restart postfix
+		else
+			echo "Postfix config file not found."
+		fi
 		;;
 	"gentoo")
-		sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
+		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+			sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
+			/etc/init.d/postfix reload
+		else
+			echo "Postfix config file not found."
+		fi
 		;;
 	*)
 	;;
 esac
-/etc/init.d/postfix reload
 
 # Given some testing, this has a tendency to break stuff.
 # default umasks
@@ -94,6 +112,10 @@ case $OS in
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
 		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb apt-listbugs debian-goodies debsecan debsums -y
+		;;
+	"redhat/centos")
+		yum update -y
+		yum install arpwatch aide rkhunter -y
 		;;
 	"gentoo")
 		eix-sync
@@ -163,7 +185,7 @@ sysctl_update "net.ipv4.tcp_timestamps" "0"
 sysctl_update "net.ipv6.conf.all.accept_redirects" "0"
 sysctl_update "net.ipv6.conf.default.accept_redirects" "0"
 
-echo "Adding keywords to banner files..."
+echo -n "Adding keywords to banner files..."
 grep "access authorized legal" /etc/issue > /dev/null
 if [ ! $? -eq 0 ]; then
 	echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue
@@ -172,6 +194,7 @@ grep "access authorized legal" /etc/issue.net > /dev/null
 if [ ! $? -eq 0 ]; then
 	echo "access authorized legal monitor owner policy policies private prohibited restricted this unauthorized" >> /etc/issue.net
 fi
+echo "done."
 
 if [ -e /etc/modprobe.d/blacklist-firewire.conf -a ! -z /etc/modprobe.d/blacklist-firewire.conf ]; then
 	echo "Disabling firewire..."
@@ -189,6 +212,15 @@ if [ ! $? -eq 0 ]; then
 	echo "Disabling USB storage..."
 	echo "install usb-storage /bin/true" >> /etc/modprobe.conf
 fi
+
+echo -n "Modding sshd_config..."
+sed -i -e 's/#\?\(AllowTcpForwarding\) yes/\1 no/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(AllowAgentForwarding\) yes/\1 no/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(MaxAuthTries\) 6/\1 2/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(MaxSessions\) 10/\1 2/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(ClientAliveCountMax\) 3/\1 2/' /etc/ssh/sshd_config
+sed -i -e 's/#\?\(Compression\) yes/\1 DELAYED/' /etc/ssh/sshd_config
+echo "done."
 
 echo "Script done."
 
