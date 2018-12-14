@@ -22,13 +22,14 @@ def main():
 	for (dirpath, dirnames, filenames) in os.walk(args.workdir):
 		for f in filenames:
 			fqfile = os.path.join(dirpath, f)
-			if os.path.isfile(fqfile):
-				datediff = (float(now.strftime('%s')) - os.path.getmtime(fqfile)) / 86400
-				if args.verbosity:
-					print("Got mtime ({0}); now ({1}); diff ({2})".format(os.path.getmtime(fqfile), now.strftime('%s'), datediff))
-				if datediff >= 90:
-					print("{0}, {1:.2f}, {2:.2f}".format(fqfile, os.path.getmtime(fqfile), datediff))
-					os.remove(fqfile)
+            # get dires too
+			#if os.path.isfile(fqfile):
+			datediff = (float(now.strftime('%s')) - os.path.getmtime(fqfile)) / 86400
+			if args.verbosity:
+				print("Got mtime ({0}); now ({1}); diff ({2})".format(os.path.getmtime(fqfile), now.strftime('%s'), datediff))
+			if datediff >= 90:
+				print("{0}, {1:.2f}, {2:.2f}".format(fqfile, os.path.getmtime(fqfile), datediff))
+				os.remove(fqfile)
 
 if __name__ == '__main__':
 	main()
