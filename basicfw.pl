@@ -7,7 +7,9 @@ use POSIX qw( strftime );
 use IO::Interface::Simple;
 use Data::Dumper;
 use Getopt::Long;
+
 my ($do, $show);
+
 GetOptions(
 	'--do'		=>	\$do,
 	'--show'	=>	\$show,
@@ -16,6 +18,7 @@ GetOptions(
 if ((!$do) and (!$show)) {
     die "You must specify either the --do or --show option"
 }
+
 my $iptables = qx/which iptables/;
 chomp($iptables);
 my $iptables_save = qx/which iptables-save/;
