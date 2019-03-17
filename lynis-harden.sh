@@ -111,7 +111,7 @@ case $OS in
 		#apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
-		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb apt-listbugs debian-goodies debsecan debsums -y
+		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch -y
 		;;
 	"redhat/centos")
 		yum update -y
@@ -205,22 +205,53 @@ if [ -e /etc/modprobe.d/blacklist-firewire.conf -a ! -z /etc/modprobe.d/blacklis
 	echo "blacklist video1394" >> /etc/modprobe.d/blacklist-firewire.conf
 	echo "blacklist firewire-ohci" >> /etc/modprobe.d/blacklist-firewire.conf
 	echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+elif [ ! -e /etc/modprobe.d ]; then
+	echo "Creating /etc/modprobe.d..."
+	mkdir /etc/modprobe.d
+	echo "Disabling firewire..."
+	echo "blacklist ohci1394" > /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist dv1394" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist raw1394" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist video1394" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist firewire-ohci" >> /etc/modprobe.d/blacklist-firewire.conf
+	echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+else
+	echo "/etc/modprobe.d/blacklist-firewire.conf exists.  Firewire may already be disabled.  Check manually to be sure."
 fi
 
-grep "install usb-storage /bin/true" /etc/modprobe.conf > /dev/null
-if [ ! $? -eq 0 ]; then
+if [ -e /etc/modprobe.conf -a ! -z /etc/modprobe.conf ]; then
+	grep "install usb-storage /bin/true" /etc/modprobe.conf > /dev/null
+	if [ ! $? -eq 0 ]; then
+		echo "Disabling USB storage..."
+		echo "install usb-storage /bin/true" >> /etc/modprobe.conf
+	else
+		echo "Looks like USB storage may already be disabled.  Check /etc/modprobe.conf manually to be sure."
+	fi
+else
+	echo "Creating /etc/modprobe.conf..."
+	touch /etc/modprobe.conf
 	echo "Disabling USB storage..."
 	echo "install usb-storage /bin/true" >> /etc/modprobe.conf
 fi
 
-echo -n "Modding sshd_config..."
-sed -i -e 's/#\?\(AllowTcpForwarding\) yes/\1 no/' /etc/ssh/sshd_config
-sed -i -e 's/#\?\(AllowAgentForwarding\) yes/\1 no/' /etc/ssh/sshd_config
-sed -i -e 's/#\?\(MaxAuthTries\) 6/\1 2/' /etc/ssh/sshd_config
-sed -i -e 's/#\?\(MaxSessions\) 10/\1 2/' /etc/ssh/sshd_config
-sed -i -e 's/#\?\(ClientAliveCountMax\) 3/\1 2/' /etc/ssh/sshd_config
-sed -i -e 's/#\?\(Compression\) yes/\1 DELAYED/' /etc/ssh/sshd_config
-echo "done."
+if [ -e /etc/ssh ]; then
+	if [ -e /etc/ssh/sshd_config -a ! -z /etc/ssh/sshd_config ]; then
+		echo -n "Modding sshd_config..."
+		sed -i -e 's/#\?\(AllowTcpForwarding\) yes/\1 no/' /etc/ssh/sshd_config
+		sed -i -e 's/#\?\(AllowAgentForwarding\) yes/\1 no/' /etc/ssh/sshd_config
+		sed -i -e 's/#\?\(MaxAuthTries\) 6/\1 2/' /etc/ssh/sshd_config
+		sed -i -e 's/#\?\(MaxSessions\) 10/\1 2/' /etc/ssh/sshd_config
+		sed -i -e 's/#\?\(ClientAliveCountMax\) 3/\1 2/' /etc/ssh/sshd_config
+		sed -i -e 's/#\?\(Compression\) yes/\1 no/' /etc/ssh/sshd_config
+		echo "done."
+	else
+		echo "Looke like sshd_config does not exist or is zero (0) bytes.  Is sshd installed?"
+	fi
+else
+	echo "It doesn't look like openssh-server is installed.  Or the config file is in an unexpected location."
+fi
+
 
 echo "Script done."
 
