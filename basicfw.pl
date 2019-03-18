@@ -57,6 +57,9 @@ sub get_listening {
 	my @lines = split(/\n/, $out);
 	#print Dumper(\@lines);
 	foreach my $l ( @lines ) {
+		# skip header lines
+		next if ($l =~ /^Active Internet connections/);
+		next if ($l =~ /^Proto Recv-Q Send-Q Local/);
 		if ($l =~ /^(tcp|udp)\s+\d+\s+\d+\s+([0-9.]+)\:(\d+)\s+/) {
 			my $proto = $1; my $ip = $2; my $port = $3;
 			# 1) Anything listening on localhost isn't really listening on the network,
@@ -65,7 +68,7 @@ sub get_listening {
 			next unless ($ip =~ /0\.0\.0\.0/);
 			push @list, "$proto:$port";
 		} else {
-			warn "netstat line didn't match regex!";
+			warn "netstat line didn't match regex: $l";
 		}
 	}
 	return @list;
