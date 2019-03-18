@@ -26,6 +26,11 @@ chomp($iptables_save);
 
 my @commands;
 
+# check for fail2ban?
+sub check_fail2ban {
+
+}
+
 # get local subnet
 sub get_localnet {
 	my $localnet = '';
@@ -80,8 +85,9 @@ if ($show) {
 	push @commands, "-Z";
 	push @commands, "-F";
 	# create the new tables/chains we'll need
-	push @commands, "-N TCP";
-	push @commands, "-N UDP";
+	# Adding the TCP/UDP tables
+	#push @commands, "-N TCP";
+	#push @commands, "-N UDP";
 	push @commands, "-N LOGGING";
 	# set the default policy for FORWARD
 	push @commands, "-P FORWARD DROP";
@@ -100,23 +106,23 @@ if ($show) {
 		push @commands, "-A INPUT -p icmp --icmp-type 8 -m conntrack --ctstate NEW -j ACCEPT";
 	}
 	# send NEW UDP traffic to the UDP chain
-	push @commands, "-A INPUT -p udp -m conntrack --ctstate NEW -j UDP";
+	#push @commands, "-A INPUT -p udp -m conntrack --ctstate NEW -j UDP";
 	foreach my $l ( @listening ) {
 		next unless ($l =~ /^udp/);
 		my ($proto,$port) = split(/\:/, $l);
-		push @commands, "-A UDP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT";
+		push @commands, "-A INPUT -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT";
 	}
 	# return to INPUT
-	push @commands, "-A UDP -j RETURN";
+	#push @commands, "-A UDP -j RETURN";
 	# send NEW TCP traffic to the TCP chain
-	push @commands, "-A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP";
+	#push @commands, "-A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP";
 	foreach my $l ( @listening ) {
 		next unless ($l =~ /^tcp/);
 		my ($proto,$port) = split(/\:/, $l);
-		push @commands, "-A TCP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT";
+		push @commands, "-A INPUT -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT";
 	}
 	# return to INPUT
-	push @commands, "-A TCP -j RETURN";
+	#push @commands, "-A TCP -j RETURN";
 	# send all remaining traffic to the LOGGING chain
 	push @commands, "-A INPUT -j LOGGING";
 	# log them
@@ -130,11 +136,11 @@ if ($show) {
 
 if ($do) {
 	#iptables-save > basic-fw-backup_YYYYMMDDHHmmss
-	system("$iptables_save > basic-fw-backup_$stamp");
+	system("$iptables_save > ~/basic-fw-backup_$stamp");
 	system("$iptables -Z");
 	system("$iptables -F");
-	system("$iptables -N TCP");
-	system("$iptables -N UDP");
+	#system("$iptables -N TCP");
+	#system("$iptables -N UDP");
 	system("$iptables -N LOGGING");
 	system("$iptables -P FORWARD DROP");
 	system("$iptables -A INPUT -i lo -j ACCEPT");
@@ -146,20 +152,20 @@ if ($do) {
 	} else {
 		system("$iptables -A INPUT -p icmp --icmp-type 8 -m conntrack --ctstate NEW -j ACCEPT");
 	}
-	system("$iptables -A INPUT -p udp -m conntrack --ctstate NEW -j UDP");
+	#system("$iptables -A INPUT -p udp -m conntrack --ctstate NEW -j UDP");
 	foreach my $l ( @listening ) {
 		next unless ($l =~ /^udp/);
 		my ($proto,$port) = split(/\:/, $l);
-		system("$iptables -A UDP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT");
+		system("$iptables -A INPUT -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT");
 	}
-	system("$iptables -A UDP -j RETURN");
-	system("$iptables -A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP");
+	#system("$iptables -A UDP -j RETURN");
+	#system("$iptables -A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP");
 	foreach my $l ( @listening ) {
 		next unless ($l =~ /^tcp/);
 		my ($proto,$port) = split(/\:/, $l);
-		system("$iptables -A TCP -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT");
+		system("$iptables -A INPUT -p $proto --dport $port -m conntrack --ctstate NEW -j ACCEPT");
 	}
-	system("$iptables -A TCP -j RETURN");
+	#system("$iptables -A TCP -j RETURN");
 	system("$iptables -A INPUT -j LOGGING");
 	system("$iptables -A LOGGING -m limit --limit 10/min -j LOG --log-prefix \"IPTables-Dropped: \" --log-level info");
 	system("$iptables -A LOGGING -j DROP");
