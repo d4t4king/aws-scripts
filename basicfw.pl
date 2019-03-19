@@ -83,7 +83,7 @@ print Dumper(\@listening);
 
 if ($show) {
 	# backup any existing iptables rules
-	push @commands, "$iptables_save > basicfw_backup_$stamp";
+	push @commands, "$iptables_save > ~/basicfw_backup_$stamp";
 	# Flush and zeroize the foundation tables/chains
 	push @commands, "-Z";
 	push @commands, "-F";
