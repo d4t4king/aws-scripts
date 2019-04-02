@@ -197,6 +197,23 @@ fi
 echo "done."
 
 if [ -e /etc/modprobe.d/blacklist-firewire.conf -a ! -z /etc/modprobe.d/blacklist-firewire.conf ]; then
+	grep -E "(ohci1394|sbp2|dv1394|raw1394|video1394|firewire-ohci|firewire-sbp2)" /etc/modprobe.d/blacklist-firewire.conf > /dev/null 2>&1
+	if [ $? == 1 ]; then		# not found
+		echo "Disabling firewire..."
+		echo "blacklist ohci1394" >> /etc/modprobe.d/blacklist-firewire.conf
+		echo "blacklist sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+		echo "blacklist dv1394" >> /etc/modprobe.d/blacklist-firewire.conf
+		echo "blacklist raw1394" >> /etc/modprobe.d/blacklist-firewire.conf
+		echo "blacklist video1394" >> /etc/modprobe.d/blacklist-firewire.conf
+		echo "blacklist firewire-ohci" >> /etc/modprobe.d/blacklist-firewire.conf
+		echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
+	else
+		echo "Some or all firewaire strings found."
+		echo "Firewaire may already be discabled.  Check manually to be sure."
+	fi
+elif [ ! -e /etc/modprobe.d ]; then
+	echo "Creating /etc/modprobe.d..."
+	mkdir /etc/modprobe.d
 	echo "Disabling firewire..."
 	echo "blacklist ohci1394" > /etc/modprobe.d/blacklist-firewire.conf
 	echo "blacklist sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
@@ -205,10 +222,7 @@ if [ -e /etc/modprobe.d/blacklist-firewire.conf -a ! -z /etc/modprobe.d/blacklis
 	echo "blacklist video1394" >> /etc/modprobe.d/blacklist-firewire.conf
 	echo "blacklist firewire-ohci" >> /etc/modprobe.d/blacklist-firewire.conf
 	echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
-elif [ ! -e /etc/modprobe.d ]; then
-	echo "Creating /etc/modprobe.d..."
-	mkdir /etc/modprobe.d
-	echo "Disabling firewire..."
+elif [ -e /etc/modprobe.d -a ! -e /etc/modprobe.d/blacklist-firewire.conf ]; then
 	echo "blacklist ohci1394" > /etc/modprobe.d/blacklist-firewire.conf
 	echo "blacklist sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
 	echo "blacklist dv1394" >> /etc/modprobe.d/blacklist-firewire.conf
