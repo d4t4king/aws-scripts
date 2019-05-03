@@ -22,7 +22,7 @@ else
 	if [ "${HOSTNAME}" = "is-vmsbak-p01.sempra.com" ]; then
 		tar cvf ${TARBALL} --exclude=/dev --exclude=/tmp --exclude=/proc --exclude=/sys --exclude-backups --exclude=/media --exclude=/mnt --exclude=/var/tmp --exclude=/run --exclude=/var/run --exclude="*.iso" --exclude="*/VirtualBox VMs" --exclude="*/vmware/*" --exclude="*.ova" --exclude=/var/cache/* --exclude=/var/cache --exclude=/opt --exclude=/opt/* / && xz -9 ${TARBALL}
 	else
-		tar cvf ${TARBALL} --exclude=/dev --exclude=/tmp --exclude=/proc --exclude=/sys --exclude-backups --exclude=/media --exclude=/mnt --exclude=/var/tmp --exclude=/run --exclude=/var/run --exclude="*.iso" --exclude="*/VirtualBox VMs" --exclude="*/vmware/*" --exclude="*.ova" --exclude=/var/cache/* --exclude=/var/cache / && xz -9 ${TARBALL}
+		tar cvf ${TARBALL} --exclude=/dev --exclude=/tmp --exclude=/proc --exclude=/sys --exclude-backups --exclude=/media --exclude=/mnt --exclude=/var/tmp --exclude=/run --exclude=/var/run --exclude="*.iso" --exclude="*/VirtualBox VMs" --exclude="*/vmware/*" --exclude="*.ova" --exclude=/var/cache/* --exclude=/var/cache --exclude=/opt/rapid7 --exclude=/opt/nessus / && xz -9 ${TARBALL}
 	fi
 fi
 
