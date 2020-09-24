@@ -8,15 +8,20 @@ use IO::Interface::Simple;
 use Data::Dumper;
 use Getopt::Long;
 
-my ($do, $show);
+my ($do, $show, $write, $writefile);
 
 GetOptions(
 	'--do'		=>	\$do,
 	'--show'	=>	\$show,
+	'--write'	=>	\$write,
+	'-f=s'		=>	\$writefile,
 );
 
-if ((!$do) and (!$show)) {
-    die "You must specify either the --do or --show option"
+if ((!$do) and (!$show) and (!$write)) {
+    die "You must specify an operation: --do, --show, --write"
+}
+if (($write) and (!$writefile)) {
+	die "You must specify a file to write to when writing."
 }
 
 my $iptables = qx/which iptables/;
@@ -81,7 +86,7 @@ my $stamp = strftime("%Y%m%d%H%M%S", localtime());
 my @listening = &get_listening();
 print Dumper(\@listening);
 
-if ($show) {
+if ($show or $write) {
 	# backup any existing iptables rules
 	push @commands, "$iptables_save > ~/basicfw_backup_$stamp";
 	# Flush and zeroize the foundation tables/chains
@@ -134,7 +139,15 @@ if ($show) {
 	# drop it like it's hot...
 	push @commands, "-A LOGGING -j DROP";
 	
-	print Dumper(\@commands);
+	if ($write) {
+		open( FH, '>', $writefile ) or die "There was a problem opening the file for writing: $!";
+		foreach my $line (@commands) {
+			print FH $line . "\n";
+		}
+		close(FH);
+	} else {
+		print Dumper(\@commands);
+	}
 }
 
 if ($do) {
