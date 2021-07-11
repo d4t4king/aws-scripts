@@ -6,5 +6,7 @@ if [ `id -u` -eq 0 ]; then
 	for P in `dpkg -l | grep "^rc" | awk '{ print $2 }'`; do
 		dpkg --purge ${P}
 	done
+else
+	echo "You must be root to run this action."
 fi
 
