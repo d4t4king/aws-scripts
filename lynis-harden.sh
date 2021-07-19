@@ -33,6 +33,19 @@ sysctl_update() {
 #set +x
 }
 
+is_installed() {
+	PKG=$1
+	FOUND=$(dpkg --get-selections | grep "\binstall\b" | cut -f1 | grep "^${PKG}$")
+
+	if [[ "${FOUND}x" == "x" ]]; then
+		echo "${PKG} is not installed."
+		return 0
+	else
+		echo "${FOUND} is installed."
+		return 1
+	fi
+}
+
 if [ -e /etc/gentoo-release -a ! -z /etc/gentoo-release ]; then
 	OS="gentoo"
 elif [ -e /etc/debian_version -a ! -z /etc/debian_version ]; then
@@ -49,42 +62,49 @@ if [ $(id -u) != 0 ]; then
 fi
 
 # some basic package configuration
-# php.ini's
-echo "Finding and replacing values in php.ini's..."
-for F in `find / -type f -name "php.ini"`; do
-	echo -n "${F}" && sed -i -e 's/\(expose_php = \)On/\1Off/' -e 's/\(allow_url_fopen = \)On/\1Off/' $F
-done
-# postfix banner obfuscation
-echo "Updating postfix config..."
-case $OS in 
-	"debian/ubuntu")
-		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
-			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
-			/etc/init.d/postfix reload
-		else
-			echo "Postfix config file not found."
-		fi
-		;;
-	"redhat/centos")
-		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
-			#smtpd_banner = $myhostname ESMTP $mail_name
-			sed -i -e 's/#\?\(smtpd_banner = \$myhostname ESMTP\) $mail_name/\1/' /etc/postfix/main.cf
-			systemctl restart postfix
-		else
-			echo "Postfix config file not found."
-		fi
-		;;
-	"gentoo")
-		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
-			sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
-			/etc/init.d/postfix reload
-		else
-			echo "Postfix config file not found."
-		fi
-		;;
-	*)
-	;;
-esac
+if [[ $(is_installed php*) == 1 ]]; then
+	# php.ini's
+	echo "Finding and replacing values in php.ini's..."
+	for F in `find / -type f -name "php.ini"`; do
+		echo -n "${F}" && sed -i -e 's/\(expose_php = \)On/\1Off/' -e 's/\(allow_url_fopen = \)On/\1Off/' $F
+	done
+fi
+
+if [[ $(is_installed postfix) == 1 ]]; then
+	# postfix banner obfuscation
+	echo "Updating postfix config..."
+	case $OS in 
+		"debian/ubuntu")
+			if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+				sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+				/etc/init.d/postfix reload
+			else
+				echo "Postfix config file not found."
+			fi
+			;;
+		"redhat/centos")
+			if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+				#smtpd_banner = $myhostname ESMTP $mail_name
+				sed -i -e 's/#\?\(smtpd_banner = \$myhostname ESMTP\) $mail_name/\1/' /etc/postfix/main.cf
+				systemctl restart postfix
+			else
+				echo "Postfix config file not found."
+			fi
+			;;
+		"gentoo")
+			if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+				sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
+				/etc/init.d/postfix reload
+			else
+				echo "Postfix config file not found."
+			fi
+			;;
+		*)
+			;;
+	esac
+else
+	echo "postfix is not installed."
+fi
 
 # Given some testing, this has a tendency to break stuff.
 # default umasks
@@ -111,7 +131,18 @@ case $OS in
 		#apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
-		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch -y
+		apt-get install libpam-cracklib -y 
+		apt-get install apt-show-versions -y
+		apt-get install libpam-tmpdir -y 
+		apt-get install libpam-usb -y 
+		apt-get install debian-goodies -y
+		apt-get install debsecan -y 
+		apt-get install debsums -y 
+		apt-get install rkhunter -y 
+		apt-get install acct -y 
+		apt-get install arpwatch -y
+		apt-get install aide -y
+		apt-get install cpanminus -y
 		;;
 	"redhat/centos")
 		yum update -y
