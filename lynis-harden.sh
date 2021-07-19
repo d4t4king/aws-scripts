@@ -35,14 +35,13 @@ sysctl_update() {
 
 is_installed() {
 	PKG=$1
+	SILENT=$2
 	FOUND=$(dpkg --get-selections | grep "\binstall\b" | cut -f1 | grep "^${PKG}$")
 
 	if [[ "${FOUND}x" == "x" ]]; then
-		echo "${PKG} is not installed."
-		return 0
+		echo "FALSE"
 	else
-		echo "${FOUND} is installed."
-		return 1
+		echo "TRUE"
 	fi
 }
 
@@ -62,7 +61,7 @@ if [ $(id -u) != 0 ]; then
 fi
 
 # check for the skip list/profile
-if [ ! -d /etc/lynis ];
+if [ ! -d /etc/lynis ]; then
 	echo -n "Global profile directory does not exist.  Creating..."
 	mkdir /etc/lynis
 	touch /etc/lynis/custom.prf
@@ -77,8 +76,15 @@ else
 	fi
 fi
 
+#A=$(is_installed bash false)
+#echo "${A} : $?"
+#B=$(is_installed foobar false)
+#echo "${B} : $?"
+
+#exit 1
+
 # some basic package configuration
-if [[ $(is_installed php*) == 1 ]]; then
+if [[ $(is_installed php*) == "TRUE" ]]; then
 	# php.ini's
 	echo "Finding and replacing values in php.ini's..."
 	for F in `find / -type f -name "php.ini"`; do
@@ -88,7 +94,7 @@ else
 	echo "PHP is not installed."
 fi
 
-if [[ $(is_installed postfix) == 1 ]]; then
+if [[ $(is_installed postfix) == "TRUE" ]]; then
 	# postfix banner obfuscation
 	echo "Updating postfix config..."
 	case $OS in 
@@ -151,7 +157,7 @@ case $OS in
 		# 4/12/2017 -- 
 		# 7/19/2021 -- 
 		for P in libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch aide cpanminus; do
-			if [[ $(is_installed %{P}) == 1 ]]; then 
+			if [[ $(is_installed ${P}) == "TRUE" ]]; then 
 				echo "${P} already installed" 
 			else 
 				apt-get install ${P} -y 
