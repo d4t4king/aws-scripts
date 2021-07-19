@@ -149,18 +149,14 @@ case $OS in
 		#apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
-		apt-get install libpam-cracklib -y 
-		apt-get install apt-show-versions -y
-		apt-get install libpam-tmpdir -y 
-		apt-get install libpam-usb -y 
-		apt-get install debian-goodies -y
-		apt-get install debsecan -y 
-		apt-get install debsums -y 
-		apt-get install rkhunter -y 
-		apt-get install acct -y 
-		apt-get install arpwatch -y
-		apt-get install aide -y
-		apt-get install cpanminus -y
+		# 7/19/2021 -- 
+		for P in libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch aide cpanminus; do
+			if [[ $(is_installed %{P}) == 1 ]]; then 
+				echo "${P} already installed" 
+			else 
+				apt-get install ${P} -y 
+			fi
+		done
 		;;
 	"redhat/centos")
 		yum update -y
