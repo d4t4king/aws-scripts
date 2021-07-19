@@ -61,6 +61,22 @@ if [ $(id -u) != 0 ]; then
 	echo "This script must be run as root.\n";
 fi
 
+# check for the skip list/profile
+if [ ! -d /etc/lynis ];
+	echo -n "Global profile directory does not exist.  Creating..."
+	mkdir /etc/lynis
+	touch /etc/lynis/custom.prf
+	echo "done."
+else
+	echo -n "Profile directory exists, checking file..."
+	if [ -e /etc/lynis/custom.prf ]; then
+		echo "exists."
+	else
+		touch /etc/lynis/custom.prf
+		echo "created."
+	fi
+fi
+
 # some basic package configuration
 if [[ $(is_installed php*) == 1 ]]; then
 	# php.ini's
@@ -68,6 +84,8 @@ if [[ $(is_installed php*) == 1 ]]; then
 	for F in `find / -type f -name "php.ini"`; do
 		echo -n "${F}" && sed -i -e 's/\(expose_php = \)On/\1Off/' -e 's/\(allow_url_fopen = \)On/\1Off/' $F
 	done
+else
+	echo "PHP is not installed."
 fi
 
 if [[ $(is_installed postfix) == 1 ]]; then
