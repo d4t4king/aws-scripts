@@ -156,7 +156,7 @@ case $OS in
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
 		# 7/19/2021 -- 
-		for P in libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch aide cpanminus; do
+		for P in unattended-upgrades iptables-persistent libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch aide cpanminus; do
 			if [[ $(is_installed ${P}) == "TRUE" ]]; then 
 				echo "${P} already installed" 
 			else 
@@ -300,6 +300,19 @@ else
 	echo "install usb-storage /bin/true" >> /etc/modprobe.conf
 fi
 
+# Disable unnecessary/antiquated protocols.
+for P in dccp sctp tipc rds; do
+	echo "install ${P} /bin/true" >> /etc/modprobe.conf
+done
+
+# Disable and secure the CUPS daemon
+if [[ $OS == "debian/ubuntu" ]]; then
+	systemctl stop cups
+	systemctl disable cups
+	chmod 0600 /etc/cups*
+fi
+
+# Secure SSHD configusation
 if [ -e /etc/ssh ]; then
 	if [ -e /etc/ssh/sshd_config -a ! -z /etc/ssh/sshd_config ]; then
 		echo -n "Modding sshd_config..."
