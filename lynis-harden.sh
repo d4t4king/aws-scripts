@@ -209,7 +209,7 @@ if [ -e /etc/modprobe.d/blacklist-firewire.conf -a ! -z /etc/modprobe.d/blacklis
 		echo "blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist-firewire.conf
 	else
 		echo "Some or all firewaire strings found."
-		echo "Firewaire may already be discabled.  Check manually to be sure."
+		echo "Firewire may already be disabled.  Check manually to be sure."
 	fi
 elif [ ! -e /etc/modprobe.d ]; then
 	echo "Creating /etc/modprobe.d..."
