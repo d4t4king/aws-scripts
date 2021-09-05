@@ -2,6 +2,7 @@
 
 require 'colorize'
 require 'netaddr'
+require 'date'
 
 @ips = Hash.new
 @to_block = Array.new

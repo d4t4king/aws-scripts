@@ -33,6 +33,18 @@ sysctl_update() {
 #set +x
 }
 
+is_installed() {
+	PKG=$1
+	SILENT=$2
+	FOUND=$(dpkg --get-selections | grep "\binstall\b" | cut -f1 | cut -d: -f1 | grep "^${PKG}$")
+
+	if [[ "${FOUND}x" == "x" ]]; then
+		echo "FALSE"
+	else
+		echo "TRUE"
+	fi
+}
+
 if [ -e /etc/gentoo-release -a ! -z /etc/gentoo-release ]; then
 	OS="gentoo"
 elif [ -e /etc/debian_version -a ! -z /etc/debian_version ]; then
@@ -48,43 +60,75 @@ if [ $(id -u) != 0 ]; then
 	echo "This script must be run as root.\n";
 fi
 
+# check for the skip list/profile
+if [ ! -d /etc/lynis ]; then
+	echo -n "Global profile directory does not exist.  Creating..."
+	mkdir /etc/lynis
+	touch /etc/lynis/custom.prf
+	echo "done."
+else
+	echo -n "Profile directory exists, checking file..."
+	if [ -e /etc/lynis/custom.prf ]; then
+		echo "exists."
+	else
+		touch /etc/lynis/custom.prf
+		echo "created."
+	fi
+fi
+
+#A=$(is_installed bash false)
+#echo "${A} : $?"
+#B=$(is_installed foobar false)
+#echo "${B} : $?"
+
+#exit 1
+
 # some basic package configuration
-# php.ini's
-echo "Finding and replacing values in php.ini's..."
-for F in `find / -type f -name "php.ini"`; do
-	echo -n "${F}" && sed -i -e 's/\(expose_php = \)On/\1Off/' -e 's/\(allow_url_fopen = \)On/\1Off/' $F
-done
-# postfix banner obfuscation
-echo "Updating postfix config..."
-case $OS in 
-	"debian/ubuntu")
-		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
-			sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
-			/etc/init.d/postfix reload
-		else
-			echo "Postfix config file not found."
-		fi
-		;;
-	"redhat/centos")
-		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
-			#smtpd_banner = $myhostname ESMTP $mail_name
-			sed -i -e 's/#\?\(smtpd_banner = \$myhostname ESMTP\) $mail_name/\1/' /etc/postfix/main.cf
-			systemctl restart postfix
-		else
-			echo "Postfix config file not found."
-		fi
-		;;
-	"gentoo")
-		if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
-			sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
-			/etc/init.d/postfix reload
-		else
-			echo "Postfix config file not found."
-		fi
-		;;
-	*)
-	;;
-esac
+if [[ $(is_installed php*) == "TRUE" ]]; then
+	# php.ini's
+	echo "Finding and replacing values in php.ini's..."
+	for F in `find / -type f -name "php.ini"`; do
+		echo -n "${F}" && sed -i -e 's/\(expose_php = \)On/\1Off/' -e 's/\(allow_url_fopen = \)On/\1Off/' $F
+	done
+else
+	echo "PHP is not installed."
+fi
+
+if [[ $(is_installed postfix) == "TRUE" ]]; then
+	# postfix banner obfuscation
+	echo "Updating postfix config..."
+	case $OS in 
+		"debian/ubuntu")
+			if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+				sed -i -e 's/\(smtpd_banner = \$myhostname ESMTP\) $mail_name (Ubuntu)/\1/' /etc/postfix/main.cf
+				/etc/init.d/postfix reload
+			else
+				echo "Postfix config file not found."
+			fi
+			;;
+		"redhat/centos")
+			if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+				#smtpd_banner = $myhostname ESMTP $mail_name
+				sed -i -e 's/#\?\(smtpd_banner = \$myhostname ESMTP\) $mail_name/\1/' /etc/postfix/main.cf
+				systemctl restart postfix
+			else
+				echo "Postfix config file not found."
+			fi
+			;;
+		"gentoo")
+			if [ -e /etc/postfix/main.cf -a ! -z /etc/postfix/main.cf ]; then
+				sed -i -e '#\(smtpd_banner = $myhostname ESMTP\)/\1/' /etc/postfix/main.cf
+				/etc/init.d/postfix reload
+			else
+				echo "Postfix config file not found."
+			fi
+			;;
+		*)
+			;;
+	esac
+else
+	echo "postfix is not installed."
+fi
 
 # Given some testing, this has a tendency to break stuff.
 # default umasks
@@ -111,7 +155,14 @@ case $OS in
 		#apt-get install libpam-cracklib clamav aide apt-show-versions rkhunter acct -y
 		#apt-get install libpam-cracklib apt-show-versions -y
 		# 4/12/2017 -- 
-		apt-get install libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch -y
+		# 7/19/2021 -- 
+		for P in screen usbguard unattended-upgrades iptables-persistent libpam-cracklib apt-show-versions libpam-tmpdir libpam-usb debian-goodies debsecan debsums rkhunter acct arpwatch aide cpanminus; do
+			if [[ $(is_installed ${P}) == "TRUE" ]]; then 
+				echo "${P} already installed" 
+			else 
+				apt-get install ${P} -y 
+			fi
+		done
 		;;
 	"redhat/centos")
 		yum update -y
@@ -249,6 +300,19 @@ else
 	echo "install usb-storage /bin/true" >> /etc/modprobe.conf
 fi
 
+# Disable unnecessary/antiquated protocols.
+for P in dccp sctp tipc rds; do
+	echo "install ${P} /bin/true" >> /etc/modprobe.conf
+done
+
+# Disable and secure the CUPS daemon
+if [[ $OS == "debian/ubuntu" ]]; then
+	systemctl stop cups
+	systemctl disable cups
+	chmod 0600 /etc/cups*
+fi
+
+# Secure SSHD configusation
 if [ -e /etc/ssh ]; then
 	if [ -e /etc/ssh/sshd_config -a ! -z /etc/ssh/sshd_config ]; then
 		echo -n "Modding sshd_config..."
@@ -266,6 +330,31 @@ else
 	echo "It doesn't look like openssh-server is installed.  Or the config file is in an unexpected location."
 fi
 
+echo "Setting permissions on files...."
+$ Files 0600
+for F in /etc/crontab /etc/ssh/sshd_config /etc/cron.daily /etc/cron.hourly /etc/cron.weekly /etc/cron.monthly /etc/cups/cupsd.conf; do
+	CURRENT=$(ls -l ${F} | awk '{ print $1 }')
+	if [[ $CURRENT == "rw-------" ]]; then
+		echo "Strict permissions on ${F}"
+	else
+		echo -n "Setting permissions on ${F}...."
+		chmod 0600 ${F}
+		echo "done."
+	fi
+done
+
+for D in /etc/cron.d /etc/cups /etc/cupshelpers; do
+	CURRENT=$(ls -l ${D} | awk '{ print $1 }')
+	if [[ CURRENT == "rwx------" ]]; then
+		echo "Strict permissions on ${D}"
+	else
+		echo -n "Setting permissions on ${D}...."
+		chmod 0600 ${D}
+		echo "done."
+	fi
+done
+
+	
 
 echo "Script done."
 
