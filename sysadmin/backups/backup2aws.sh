@@ -30,7 +30,7 @@ elif [ "${TYPE}" = "home" ]; then
 		echo "There was a problem with the backup."
 	fi
 elif [ "${TYPE}" = "varetc" ]; then
-	tar cpf /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude="/var/tmp" --exclude="/var/tmp/*" --exclude="/var/run" --exclude="/var/run/*" --exclude="/var/cache" --exclude="/var/cache/*" --exclude="/var/lib/lxcfs" --exclude="/var/lib/lxcfs/*" --exclude="/var/spool" --exclude="/var/spool/*" --exclude="/var/agentx/master" --exclude="/var/lib/clamav" --exclude="/var/lib/lxd/unix.socket" --exclude="/var/lib/mysql/ib_logfile0" /etc /var | xz -9 /tmp/${TYPE}_${HOST}_${DATE}.tar
+	tar cpf /tmp/${TYPE}_${HOST}_${DATE}.tar --exclude-backups --exclude-vcs --exclude="/var/tmp" --exclude="/var/tmp/*" --exclude="/var/run" --exclude="/var/run/*" --exclude="/var/cache" --exclude="/var/cache/*" --exclude="/var/lib/lxcfs" --exclude="/var/lib/lxcfs/*" --exclude="/var/spool" --exclude="/var/spool/*" --exclude="/var/agentx/master" --exclude="/var/lib/clamav" --exclude="/var/lib/lxd/unix.socket" --exclude="/var/lib/mysql/ib_logfile0" /etc /var | xz -9 /tmp/${TYPE}_${HOST}_${DATE}.tar
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
@@ -42,7 +42,7 @@ elif [ "${TYPE}" = "varetc" ]; then
 		echo "There was a problem with the backup."
 	fi
 elif [ "${TYPE}" = "full" ]; then
-	tar cpf /tmp/${TYPE}_${HOST}_${DATE}.tar.xz --exclude-backups --exclude-vcs --exclude="/var/tmp" --exclude="/var/tmp/*" --exclude="/var/run/*" --exclude="/var/run" --exclude="/var/cache/*" --exclude="/var/cache" --exclude="/var/spool/*" --exclude="/var/spool" --exclude="/tmp/*" --exclude="/tmp" --exclude="/dev/*" --exclude="/dev" --exclude="/run/*" --exclude="/run" --exclude="/proc/*" --exclude="/proc" --exclude="/sys/*" --exclude="/sys" --exclude="*.tar.gz" --exclude="*.tar.xz" --exclude="/var/lib/lxd/unix.socket" --exclude="/var/lib/lxcfs" --exclude="/var/lib/lxcfs/*" --exclude="/var/lib/clamav" --exclude="/var/lib/fail2ban" --exclude="/var/lib/fail2ban/*" / | xz -9 /tmp/${TYPE}_${HOST}_${DATE}.tar
+	tar cpf /tmp/${TYPE}_${HOST}_${DATE}.tar --exclude-backups --exclude-vcs --exclude="/var/tmp" --exclude="/var/tmp/*" --exclude="/var/run/*" --exclude="/var/run" --exclude="/var/cache/*" --exclude="/var/cache" --exclude="/var/spool/*" --exclude="/var/spool" --exclude="/tmp/*" --exclude="/tmp" --exclude="/dev/*" --exclude="/dev" --exclude="/run/*" --exclude="/run" --exclude="/proc/*" --exclude="/proc" --exclude="/sys/*" --exclude="/sys" --exclude="*.tar.gz" --exclude="*.tar.xz" --exclude="/var/lib/lxd/unix.socket" --exclude="/var/lib/lxcfs" --exclude="/var/lib/lxcfs/*" --exclude="/var/lib/clamav" --exclude="/var/lib/fail2ban" --exclude="/var/lib/fail2ban/*" / | xz -9 /tmp/${TYPE}_${HOST}_${DATE}.tar
 	if [ $? -eq 0 ]; then
 		aws s3 cp /tmp/${TYPE}_${HOST}_${DATE}.tar.xz s3://dk-website-backups/${HOST}/
 		if [ $? -eq 0 ]; then
