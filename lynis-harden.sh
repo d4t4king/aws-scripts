@@ -301,11 +301,13 @@ else
 fi
 
 # Disable unnecessary/antiquated protocols.
+echo "Disabling unnecessary protocols."
 for P in dccp sctp tipc rds; do
 	echo "install ${P} /bin/true" >> /etc/modprobe.conf
 done
 
 # Disable and secure the CUPS daemon
+echo "Disable and secure the CUPS daemon."
 if [[ $OS == "debian/ubuntu" ]]; then
 	systemctl stop cups
 	systemctl disable cups
@@ -313,13 +315,15 @@ if [[ $OS == "debian/ubuntu" ]]; then
 fi
 
 # Secure SSHD configusation
+echo "Hardening SSH configuration."
 if [ -e /etc/ssh ]; then
 	if [ -e /etc/ssh/sshd_config -a ! -z /etc/ssh/sshd_config ]; then
 		echo -n "Modding sshd_config..."
 		sed -i -e 's/#\?\(AllowTcpForwarding\) yes/\1 no/' /etc/ssh/sshd_config
 		sed -i -e 's/#\?\(AllowAgentForwarding\) yes/\1 no/' /etc/ssh/sshd_config
-		sed -i -e 's/#\?\(MaxAuthTries\) 6/\1 2/' /etc/ssh/sshd_config
-		sed -i -e 's/#\?\(MaxSessions\) 10/\1 2/' /etc/ssh/sshd_config
+		# these two can cause problems connecting
+		#sed -i -e 's/#\?\(MaxAuthTries\) 6/\1 2/' /etc/ssh/sshd_config
+		#sed -i -e 's/#\?\(MaxSessions\) 10/\1 2/' /etc/ssh/sshd_config
 		sed -i -e 's/#\?\(ClientAliveCountMax\) 3/\1 2/' /etc/ssh/sshd_config
 		sed -i -e 's/#\?\(Compression\) yes/\1 no/' /etc/ssh/sshd_config
 		echo "done."
