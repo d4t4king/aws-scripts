@@ -335,7 +335,7 @@ else
 fi
 
 echo "Setting permissions on files...."
-$ Files 0600
+#$ Files 0600
 for F in /etc/crontab /etc/ssh/sshd_config /etc/cron.daily /etc/cron.hourly /etc/cron.weekly /etc/cron.monthly /etc/cups/cupsd.conf; do
 	CURRENT=$(ls -l ${F} | awk '{ print $1 }')
 	if [[ $CURRENT == "rw-------" ]]; then
