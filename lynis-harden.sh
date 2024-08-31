@@ -337,24 +337,32 @@ fi
 echo "Setting permissions on files...."
 #$ Files 0600
 for F in /etc/crontab /etc/ssh/sshd_config /etc/cron.daily /etc/cron.hourly /etc/cron.weekly /etc/cron.monthly /etc/cups/cupsd.conf; do
-	CURRENT=$(ls -l ${F} | awk '{ print $1 }')
-	if [[ $CURRENT == "rw-------" ]]; then
-		echo "Strict permissions on ${F}"
+	if [ -e ${F} ]; then
+		CURRENT=$(ls -l ${F} | awk '{ print $1 }')
+		if [[ $CURRENT == "rw-------" ]]; then
+			echo "Strict permissions on ${F}"
+		else
+			echo -n "Setting permissions on ${F}...."
+			chmod 0600 ${F}
+			echo "done."
+		fi
 	else
-		echo -n "Setting permissions on ${F}...."
-		chmod 0600 ${F}
-		echo "done."
+		echo "${F} not found on system.  Skipping...."
 	fi
 done
 
 for D in /etc/cron.d /etc/cups /etc/cupshelpers; do
-	CURRENT=$(ls -l ${D} | awk '{ print $1 }')
-	if [[ CURRENT == "rwx------" ]]; then
-		echo "Strict permissions on ${D}"
+	if [ -e ${D} ]; then
+		CURRENT=$(ls -l ${D} | awk '{ print $1 }')
+		if [[ CURRENT == "rwx------" ]]; then
+			echo "Strict permissions on ${D}"
+		else
+			echo -n "Setting permissions on ${D}...."
+			chmod 0600 ${D}
+			echo "done."
+		fi
 	else
-		echo -n "Setting permissions on ${D}...."
-		chmod 0600 ${D}
-		echo "done."
+		echo "${D} not found on system.  Skipping...."
 	fi
 done
 
