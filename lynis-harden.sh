@@ -309,9 +309,13 @@ done
 # Disable and secure the CUPS daemon
 echo "Disable and secure the CUPS daemon."
 if [[ $OS == "debian/ubuntu" ]]; then
-	systemctl stop cups
-	systemctl disable cups
-	chmod 0600 /etc/cups*
+	if [ apt list --installed | grep cups ]; then
+		systemctl stop cups
+		systemctl disable cups
+		if [ -e /etc/cups ]; then chmod 0600 /etc/cups*; fi
+	else
+		echo "CUPS does not appear to be installed.  Skipping...."
+	fi
 fi
 
 # Secure SSHD configusation
