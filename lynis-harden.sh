@@ -382,6 +382,7 @@ for D in /etc/cron.d /etc/cups /etc/cupshelpers; do
 	fi
 done
 
+# set interfaces NOT in promicuos mode.
 	
 
 echo "Script done."
