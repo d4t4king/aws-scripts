@@ -130,6 +130,15 @@ else
 	echo "postfix is not installed."
 fi
 
+if [[ $(is_installed apache2) == "TRUE" ]]; then
+	echo -n "Enabling TRACE HTTP verb...."
+	sed -i -e 's/\(TraceEnable Off\)/#\1/' -e 's/\(#\)\(TraceEnable On\)/\2/' /etc/apache2/conf-enabled/security.conf
+	echo "done."
+	# TODO Add necessary seds for DISabling ServerName
+else
+	echo "Apache2 is not installed."
+fi
+
 # Given some testing, this has a tendency to break stuff.
 # default umasks
 #echo "Setting default umasks..."
