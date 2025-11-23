@@ -57,7 +57,9 @@ dbdate = "#{t.year}-#{t.month}-#{t.day} #{hour}:#{min}:#{sec}"
 #puts "#{dbdate}, #{mem[:used]}, #{swap[:used]}"
 
 begin
-	db = SQLite3::Database.open("/var/www/salt.dataking.us/db/mem.db")
+	db_path = "/var/www/db"
+	FileUtils.mkdir_p(db_path) unless File.directory?(db_path)
+	db = SQLite3::Database.open("/var/www/db/mem.db")
 	db.execute("CREATE TABLE IF NOT EXISTS mem(id INTEGER PRIMARY KEY AUTOINCREMENT, date DATETIME, mem_used INTEGER, swap_used INTEGER)")
 	db.execute("INSERT INTO mem (date, mem_used, swap_used) VALUES ('#{dbdate}','#{mem[:used]}','#{swap[:used]}')")
 rescue SQLite3::Exception => e
