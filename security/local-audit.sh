@@ -6,16 +6,22 @@
 #       1:      Not run with sufficient privileges.  Run as root or use sudo.
 #       2:      Unable to collect distribution from /etc/lsb-release or /etc/os-release.  (TODO)
 #       3:      Distribution not recognized.  Unable to update system.  (TODO)
+#	4:	Unable to determine OS_FAMILY.  This most likely means I haven't ecountered this OS string yet.
+#	5:	There was an error with the redhat useradd command, but it doesn't say what is wrong.
+#	6:	There was an error with the debian useradd command, but it doesn't say what it wrong.
 #
 #######################################################################
+#function RUNTIMEERRORi() {
+
+#}
 ### This function attempts to get the distribution name.
 ### This should be expanded to discover multiple distros.
 function get_distribution() {
     DISTRIB=""
     if [[ -e /etc/lsb-release ]]; then
-        DISTRIB=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d= -f2)
+        DISTRIB=$(grep "DISTRIB_ID=" /etc/lsb-release | cut -d= -f2 | sed -e 's/"//g')
     elif [[ -e /etc/os-release ]]; then
-        DISTRIB=$(grep "ID" /etc/os-release | cut -d= -f2)
+        DISTRIB=$(grep -E "\bID=" /etc/os-release | cut -d= -f2 | sed -e 's/"//g')
     else
         echo "Unable to determine distribution from /etc/lsb-release or /etc/os-release."
     fi
@@ -47,7 +53,17 @@ echo "done."
 declare -i TOTAL_CHECKS=10
 declare -i CHECKS_RUN=0
 declare -i SKIPPED_CHECKS=0
+# set the DISTRIB variable to the name of the distribution: ubuntu, debian, redhat, rocky, etc.
+# TODO: Should also probably try to classify OS family. An OS Family of 'Debian' would include, Ubuntu, Linux Mint Kali, etc.
 get_distribution
+
+#Endeavor to derive the os family from DISTRIB
+OS_FAMILIES_LOOKUP=( [ubuntu]="debian" [debian]="debian" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
+echo "INFO::  DISTRIB = ${DISTRIB}"
+echo "INFO::  OS_FAMILIES_LOOKUP = ${OS_FAMILIES_LOOKUP}"
+OS_FAMILY=${OS_FAMILIES_LOOKUP[$DISTRIB]}
+echo "INFO::  OS_FAMILY = ${OS_FAMILY}"
+
 
 echo "====================### 001 USERS CHECKS ###===================="
 echo "  Ensure relevant groups exist..."
@@ -72,9 +88,46 @@ for U in charlie pi ubuntu; do
     else   
         echo "    User '${U}' does not exist."
         echo "    Adding user '${U}' with primary group of 'sudo'..."
-        useradd -m -k /etc/skel -g sudo -b /bin/bash -C "${U}"
+	if [[ $OS_FAMILY == "redhat" ]]; then
+		useradd -m -k /etc/skel -g sudo -G wheel,${U} -s /bin/bash -c "${U}" ${U}
+		#useradd -m -k /etc/skel -g sudo -G wheel,test -s /bin/bash -c "This is a test" test
+		if [ $? -ne 0 ]; then
+			echo "ERROR :::: THERE WAS AN UNSPECIFIED ERROR!!!"
+			echo "ERROR :::: (redhat) (useradd)"
+			exit 5
+		fi
+	elif [[ $OS_FAMILY == "debian" ]]; then
+        	useradd -m -k /etc/skel -g sudo -s /bin/bash -C "${U}"
+		if [ $? -ne 0 ]; then
+			echo "ERROR :::: THERE WAS AN UNSPECIFIED ERROR!!!"
+			echo "ERROR :::: (debian) (useradd)"
+			exit 6
+		fi
+	else
+		echo "    DISTRIB: ${DISTRIB}"
+		echo "    OS_FAMILY: ${OS_FAMILY}"
+		echo "UNABLE TO DETERMINE OS_FAMILY.  ${OS_FAMILY} is unrecognized."
+		exit 4
+	fi
 	echo "    Adding groups to user..."
-	usermod -g admin,${U} ${U}
+	if [[ $OS_FAMILY == "redhat" ]]; then
+		usermod -G admin,${U} ${U}
+		if [ $? -ne 0 ]; then
+			echo "ERROR :::: There was an unspecified error."
+			echo "ERROR :::: (redhat) (usermod)"
+			exit 7
+		fi
+	elif [[ $OS_FAMILY == "debian" ]]; then
+		usermod -g admin,${U} ${U}
+		if [ $? -ne 0 ]; then
+			echo "ERROR :::: There was an unspecieid error."
+			echo "ERROR :::: (debian) (usermod)"
+			exit 8
+		fi
+	else
+		echo "ERROR :::: Unrecognized OS_FAMILY=($OS_FAMILY)"
+		exit 9
+	fi
     fi
 done
 CHECKS_RUN+=1
@@ -93,7 +146,7 @@ for U in charlie pi ubuntu; do
     else
         echo "Could not find public key for user '${U}', in the default path."
         echo "    Creating SSH keys for ${U}..."
-        if [[ ! -e /home/${U}/.ssh ]] then
+        if [[ ! -e /home/${U}/.ssh ]]; then
             mkdir -p /home/${U}/.ssh
         fi
         sudo -u ${U} ssh-keygen -t rsa -b 4096 -N "" -f /home/${U}/.ssh/id_rsa
@@ -154,7 +207,7 @@ if [[ ${SKIP_UPDATE,,} == ${SKIP_REF,,} ]]; then
     SKIPPED_CHECKS+=1
 else
     echo "    Starting system update."
-    if [[ ${DISTRIB,,} == "ubuntu" || ${DISTRIB,,} == "debian" ]]; then
+    if [[ ${OS_FAMILY,,} == "debian" ]]; then
         apt-get update -qq
         if [[ $(apt list --upgradable 2>&1 /dev/null) ]]; then
             echo "TRUE RC: $?"
@@ -166,6 +219,13 @@ else
             REBOOT_REQUIRED=0
             echo "    A reboot is required after the completion of this script."
         fi
+    elif [[ ${OS_FAMILY,,} == "redhat" ]]; then
+	    yum makecache
+	    if [ $? -ne 0 ]; then
+		    echo "ERROR :::: Return code not 0i ($?)"
+		    echo "ERROR :::: (redhat) (yum makecache)"
+		    exit 10
+	    fi
     else
         echo "Unrecognized distribution. |${DISTRIB}|"
         exit 3
