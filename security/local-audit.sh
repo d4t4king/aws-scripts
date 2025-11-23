@@ -19,11 +19,11 @@
 function get_distribution() {
     DISTRIB=""
     if [[ -e /etc/lsb-release ]]; then
-        DISTRIB=$(grep "DISTRIB_ID=" /etc/lsb-release | cut -d= -f2 | sed -e 's/"//g')
+        DISTRIB=$(grep "DISTRIB_ID=" /etc/lsb-release | cut -d= -f2 | sed -e 's/"//g' | tr "[A-Z]" "[a-z]")
     elif [[ -e /etc/os-release ]]; then
-        DISTRIB=$(grep -E "\bID=" /etc/os-release | cut -d= -f2 | sed -e 's/"//g')
+        DISTRIB=$(grep -E "\bID=" /etc/os-release | cut -d= -f2 | sed -e 's/"//g' | tr "[A-Z]" "[a-z]")
     else
-        echo "Unable to determine distribution from /etc/lsb-release or /etc/os-release."
+        echo "ERROR  ::::  Unable to determine distribution from /etc/lsb-release or /etc/os-release."
     fi
 }
 
@@ -58,11 +58,14 @@ declare -i SKIPPED_CHECKS=0
 get_distribution
 
 #Endeavor to derive the os family from DISTRIB
-OS_FAMILIES_LOOKUP=( [ubuntu]="debian" [debian]="debian" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
-echo "INFO::  DISTRIB = ${DISTRIB}"
-echo "INFO::  OS_FAMILIES_LOOKUP = ${OS_FAMILIES_LOOKUP}"
-OS_FAMILY=${OS_FAMILIES_LOOKUP[$DISTRIB]}
-echo "INFO::  OS_FAMILY = ${OS_FAMILY}"
+#declare -A OS_FAMILY_LOOKUP
+declare -A OS_FAMILY_LOOKUP=( [ubuntu]="debian" [debian]="debian" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
+echo "INFO  ::  OS_FAMILY_LOOKUP enumeration:"
+echo "INFO  ::  ubuntu: ${OS_FAMILY_LOOKUP['ubuntu']}"
+echo "INFO  ::  debian: ${OS_FAMILY_LOOKUP['debian']}"
+echo "INFO  ::  DISTRIB = ${DISTRIB}"
+OS_FAMILY=${OS_FAMILY_LOOKUP[$DISTRIB]}
+echo "INFO  ::  OS_FAMILY = ${OS_FAMILY}"
 
 
 echo "====================### 001 USERS CHECKS ###===================="
@@ -208,6 +211,8 @@ if [[ ${SKIP_UPDATE,,} == ${SKIP_REF,,} ]]; then
 else
     echo "    Starting system update."
     if [[ ${OS_FAMILY,,} == "debian" ]]; then
+        echo "  INFO :: DISTRIB = ${DISTRIB,,}"
+        echo "  INFO :: OS_FAMILY = ${OS_FAMILY,,}"
         apt-get update -qq
         if [[ $(apt list --upgradable 2>&1 /dev/null) ]]; then
             echo "TRUE RC: $?"
@@ -220,9 +225,11 @@ else
             echo "    A reboot is required after the completion of this script."
         fi
     elif [[ ${OS_FAMILY,,} == "redhat" ]]; then
+        echo "  INFO :: DISTRIB = ${DISTRIB,,}"
+        echo "  INFO :: OS_FAMILY = ${OS_FAMILY,,}"
 	    yum makecache
 	    if [ $? -ne 0 ]; then
-		    echo "ERROR :::: Return code not 0i ($?)"
+		    echo "ERROR :::: Return code not 0 ($?)"
 		    echo "ERROR :::: (redhat) (yum makecache)"
 		    exit 10
 	    fi
