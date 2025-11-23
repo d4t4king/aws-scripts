@@ -318,7 +318,7 @@ done
 # Disable and secure the CUPS daemon
 echo "Disable and secure the CUPS daemon."
 if [[ $OS == "debian/ubuntu" ]]; then
-	if [ $(apt list --installed | grep cups) == 0 ]; then
+	if [ $(dpkg --get-selections cups | awk '{ print $1 }') ]; then
 		systemctl stop cups
 		systemctl disable cups
 		if [ -e /etc/cups ]; then chmod 0600 /etc/cups*; fi
@@ -330,7 +330,7 @@ fi
 # Stop and disable redis.  (I think something depends on redis, but I don't remember for sure.  More research required.
 echo "Disable and secure the Redis daemon."
 if [[ $OS == "debian/ubuntu" ]]; then
-	if [ $(apt list --installed | grep redis) == 0 ]; then
+	if [ $(dpkg --get-selections redis | awk '{ print $1 }') ]; then
 		systemctl stop redis
 		systemctl disable redis
 		if [ -e /etc/redis ]; then chmod 0600 /etc/redis*; fi
