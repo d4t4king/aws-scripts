@@ -2,6 +2,7 @@
 
 require 'colorize'
 require 'sqlite3'
+require 'fileutils'
 
 output = %x(free -tm)
 
