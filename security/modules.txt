@@ -1,0 +1,2 @@
+sudo apt install libcwd-guard-perl libdata-dumper-simple-perl libgeo-ip-perl
+ libgetopt-simple-perl libio-interface-perl libnet-ipaddress-perl

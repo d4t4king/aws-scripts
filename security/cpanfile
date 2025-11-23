@@ -1,0 +1,13 @@
+requires Cwd;
+requires Data::Dumper;
+requires Geo::IP::PurePerl;
+requires Getopt::Long;
+requires IO::Interface::Simple;
+requires IPTables::ChainMgr;
+requires Net::IPv4Addr;
+requires POSIX;
+requires Parse::Syslog;
+requires Sort::Key::IPv4;
+requires Term::ANSIColor;
+requires URI::Encode;
+requires XML::Simple;
