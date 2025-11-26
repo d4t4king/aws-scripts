@@ -39,6 +39,58 @@ function is_installed() {
 	fi
 }
 
+### checks the mode on a file or directory
+function check_mode() {
+#set +x
+    FIFO=$1
+    MODE_TYPE=$2
+    declare -A C_MODE
+    case ${MODE_TYPE^^} in 
+        "HOME")
+            C_MODE=( [file]=600 [directory]=750 )
+            ;;
+        "CRON")
+            C_MODE=( [file]=600 [directory]=700 )
+            ;;
+        *)
+            echo "Don't know how to handle mode type ${MODE_TYPE^^}"
+            exit 11
+            ;;
+    esac
+    declare -i MODE
+    MODE=$(stat -c %a ${FIFO}) 
+    if [[ -f ${FIFO} ]]; then
+        if [[ $MODE -ne ${C_MODE["file"]} ]]; then
+            echo "BAD"
+        else
+            echo "GOOD"
+        fi
+    elif [[ -d ${FIFO} ]]; then 
+        if [[ $MODE -ne ${C_MODE["directory"]} ]]; then
+            echo "BAD"
+        else
+            echo "GOOD"
+        fi
+    else
+        echo "WARNING  :::  Unrecognized filesystem object.  Expected file or directory."
+    fi
+#set -x
+}
+
+### checks the owner on a file or directory
+function check_owner() {
+    FIFO=$1
+    OO=$2
+    OWNER=$(stat -c %U ${FIFO}) 
+    if [[ ${OWNER,,} -ne ${OO,,} ]]; then
+        echo "BAD"
+    else
+        echo "GOOD"
+    fi
+}
+#####################################################################################################
+### START MAIN
+#####################################################################################################
 # This script *reasonably* checks the same things the ansible audits check.
 echo "====================### 000 SCRIPT PREP ###===================="
 echo -n "  Checking user id...."
@@ -49,8 +101,8 @@ if [[ $(id -u) -ne 0 ]]; then
     echo "is necessary to run this script with elevated privileges (sudo)."
     exit 1
 fi
-echo "done."
-declare -i TOTAL_CHECKS=10
+echo "OK."
+declare -i TOTAL_CHECKS=24
 declare -i CHECKS_RUN=0
 declare -i SKIPPED_CHECKS=0
 # set the DISTRIB variable to the name of the distribution: ubuntu, debian, redhat, rocky, etc.
@@ -58,14 +110,14 @@ declare -i SKIPPED_CHECKS=0
 get_distribution
 
 #Endeavor to derive the os family from DISTRIB
-#declare -A OS_FAMILY_LOOKUP
+# declare -A OS_FAMILY_LOOKUP
 declare -A OS_FAMILY_LOOKUP=( [ubuntu]="debian" [debian]="debian" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
-echo "INFO  ::  OS_FAMILY_LOOKUP enumeration:"
-echo "INFO  ::  ubuntu: ${OS_FAMILY_LOOKUP['ubuntu']}"
-echo "INFO  ::  debian: ${OS_FAMILY_LOOKUP['debian']}"
-echo "INFO  ::  DISTRIB = ${DISTRIB}"
+# echo "INFO  ::  OS_FAMILY_LOOKUP enumeration:"
+# echo "INFO  ::  ubuntu: ${OS_FAMILY_LOOKUP['ubuntu']}"
+# echo "INFO  ::  debian: ${OS_FAMILY_LOOKUP['debian']}"
+# echo "INFO  ::  DISTRIB = ${DISTRIB}"
 OS_FAMILY=${OS_FAMILY_LOOKUP[$DISTRIB]}
-echo "INFO  ::  OS_FAMILY = ${OS_FAMILY}"
+# echo "INFO  ::  OS_FAMILY = ${OS_FAMILY}"
 
 
 echo "====================### 001 USERS CHECKS ###===================="
@@ -211,8 +263,8 @@ if [[ ${SKIP_UPDATE,,} == ${SKIP_REF,,} ]]; then
 else
     echo "    Starting system update."
     if [[ ${OS_FAMILY,,} == "debian" ]]; then
-        echo "  INFO :: DISTRIB = ${DISTRIB,,}"
-        echo "  INFO :: OS_FAMILY = ${OS_FAMILY,,}"
+        #echo "  INFO :: DISTRIB = ${DISTRIB,,}"
+        #echo "  INFO :: OS_FAMILY = ${OS_FAMILY,,}"
         apt-get update -qq
         if [[ $(apt list --upgradable 2>&1 /dev/null) ]]; then
             echo "TRUE RC: $?"
@@ -225,8 +277,8 @@ else
             echo "    A reboot is required after the completion of this script."
         fi
     elif [[ ${OS_FAMILY,,} == "redhat" ]]; then
-        echo "  INFO :: DISTRIB = ${DISTRIB,,}"
-        echo "  INFO :: OS_FAMILY = ${OS_FAMILY,,}"
+        #echo "  INFO :: DISTRIB = ${DISTRIB,,}"
+        #echo "  INFO :: OS_FAMILY = ${OS_FAMILY,,}"
 	    yum makecache
 	    if [ $? -ne 0 ]; then
 		    echo "ERROR :::: Return code not 0 ($?)"
@@ -252,14 +304,16 @@ if [[ ${DISTRIB,,} == "ubuntu" || ${DISTRIB,,} == "debian" ]]; then
             echo "      NOT Installed: ${PKG}"
         fi
     done
+    CHECKS_RUN+=1
 else
     echo "Unknown package manager.  Unable to check installed packages."
+    SKIPPED_CHECKS+=1
 fi
-CHECKS_RUN+=1
 
-echo "  -------------------"
+
+echo "  --------------------"
 echo "  Ensure ssh is enabled at boot time."
-echo "  -------------------"
+echo "  --------------------"
 if [[ $(systemctl status ssh | grep "Active" | cut -d" " -f7) == "active" ]]; then
     echo "    ssh.service is currently running."
 else
@@ -272,10 +326,61 @@ else
 fi
 CHECKS_RUN+=1
 
+echo "  --------------------"
+echo "  Check the home directory permissions."
+echo "  --------------------"
+
+for U in charlie pi ubuntu; do
+    #echo -n "DEBUGGGG::: ${U} = "
+    for FIFO in "/home/${U}" "/home/${U}/.ssh" "/home/${U}/.ssh/authorized_keys"; do
+        if [[ -e ${FIFO} ]]; then               # If the file or directory exists....
+            RV=$(check_mode ${FIFO} "HOME")
+            #echo "INFO  ::::  RV=${RV}"
+            if [[ ${RV} -eq "GOOD" ]]; then
+                echo "    Mode for ${FIFO} is correct."
+            else
+                echo "WARNING  :::  Incorrect mode for ${FIFO}"
+            fi
+            CHECKS_RUN+=1
+            RV=$(check_owner ${FIFO} ${U})
+            if [[ ${RV} -eq "GOOD" ]]; then
+                echo "    Owner for ${FIFO} is correct"
+            else
+                echo "WARNING  :::  Incorrect owner for ${FIFO}!"
+            fi
+        else
+            echo "WARNING  :::  ${FIFO} does not exist."
+            SKIPPED_CHECKS+=1
+        fi
+    done
+done
+
+echo "  --------------------"
+echo "  Check the permissions on cron directories."
+echo "  --------------------"
+for CRON in "/etc/cron.d" "/etc/cron.daily" "/etc/cron.hourly" "/etc/cron.monthly" "/etc/cron.weekly" "/etc/cron.yearly" "/etc/crontab"; do
+    if [[ -e ${CRON} ]]; then
+        RV=$(check_mode ${CRON} "CRON")
+        if [[ ${RV} -eq "GOOD" ]]; then
+            echo "    Mode for ${CRON} is correct."
+        else
+            echo "WARNING  :::  Incorrect mode for ${CRON}"
+        fi
+        CHECKS_RUN+=1
+    else
+        echo "WARNING  :::  ${DRON} does not exist."
+        SKIPPED_CHECKS+=1
+    fi
+done
+
 echo "====================### AUDIT COMPLETE ###===================="
 echo "TOTAL_CHECKS: ${TOTAL_CHECKS}"
 echo "CHECKS_RUN: ${CHECKS_RUN}"
 echo "SKIPPED_CHECKS: ${SKIPPED_CHECKS}"
+#echo "Completion Percent: $(expr (${CHECKS_RUN} + ${SKIPPED_CHECKS}) / ${TOTAL_CHECKS})
+echo -n "Completion Percent: "
+echo "scale=2; (${CHECKS_RUN} / ${TOTAL_CHECKS}) * 100" | bc -q | tr '\n' ' '
+echo "%"
 echo "====================### AUDIT COMPLETE ###===================="
 echo "                        AUDIT COMPLETE"
 echo "====================### AUDIT COMPLETE ###====================" 
