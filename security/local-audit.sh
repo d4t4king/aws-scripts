@@ -368,7 +368,7 @@ for CRON in "/etc/cron.d" "/etc/cron.daily" "/etc/cron.hourly" "/etc/cron.monthl
         fi
         CHECKS_RUN+=1
     else
-        echo "WARNING  :::  ${DRON} does not exist."
+        echo "WARNING  :::  ${CRON} does not exist."
         SKIPPED_CHECKS+=1
     fi
 done
