@@ -126,7 +126,7 @@ get_distribution
 
 #Endeavor to derive the os family from DISTRIB
 # declare -A OS_FAMILY_LOOKUP
-declare -A OS_FAMILY_LOOKUP=( [ubuntu]="debian" [debian]="debian" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
+declare -A OS_FAMILY_LOOKUP=( [ubuntu]="debian" [debian]="debian" [linuxmint]="debian" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
 # echo "INFO  ::  OS_FAMILY_LOOKUP enumeration:"
 # echo "INFO  ::  ubuntu: ${OS_FAMILY_LOOKUP['ubuntu']}"
 # echo "INFO  ::  debian: ${OS_FAMILY_LOOKUP['debian']}"
@@ -167,7 +167,7 @@ for U in charlie pi ubuntu; do
 			exit 5
 		fi
 	elif [[ $OS_FAMILY == "debian" ]]; then
-        	useradd -m -k /etc/skel -g sudo -s /bin/bash -C "${U}"
+        	useradd -m -k /etc/skel -g sudo -s /bin/bash -c "${U}" ${U}
 		if [ $? -ne 0 ]; then
 			echo "ERROR :::: THERE WAS AN UNSPECIFIED ERROR!!!"
 			echo "ERROR :::: (debian) (useradd)"
