@@ -9,6 +9,12 @@
 #	4:	Unable to determine OS_FAMILY.  This most likely means I haven't ecountered this OS string yet.
 #	5:	There was an error with the redhat useradd command, but it doesn't say what is wrong.
 #	6:	There was an error with the debian useradd command, but it doesn't say what it wrong.
+#	7:
+#	8:
+#	9:
+#	10:
+#	11:
+#	255:	Unable to determine distribution from /etc/lsb-release or /etc/os-release.
 #
 #######################################################################
 #function RUNTIMEERRORi() {
@@ -24,13 +30,22 @@ function get_distribution() {
         DISTRIB=$(grep -E "\bID=" /etc/os-release | cut -d= -f2 | sed -e 's/"//g' | tr "[A-Z]" "[a-z]")
     else
         echo "ERROR  ::::  Unable to determine distribution from /etc/lsb-release or /etc/os-release."
+	exit 255
     fi
 }
 
 ### Checks to see if a package is installed.
 function is_installed() {
 	PKG=$1
-	FOUND=$(dpkg --get-selections | grep "\binstall\b" | cut -f1 | cut -d: -f1 | grep "^${PKG}$")
+	get_distribution
+	if [[ ${DISTRIB,,} == "ubuntu" || ${DISTRIB,,} == "debian" ]]; then
+		FOUND=$(dpkg --get-selections | grep "\binstall\b" | cut -f1 | cut -d: -f1 | grep "^${PKG}$")
+	elif [[ ${DISTRIB,,} == "rocky" || ${DISTRIB,,} == "redhat" ]]; then
+		FOUND=$(dnf list installed | grep "${PKG}" | awk '{ print $1 }')
+	else
+		echo "ERROR  ::::  Unable to determine distribution from /etc/lsb-release or /etc/os-release."
+		exit 255
+	fi
 
 	if [[ "${FOUND}x" == "x" ]]; then
 		echo "FALSE"
@@ -188,6 +203,35 @@ done
 CHECKS_RUN+=1
 
 echo "  --------------------"
+echo "  Check the home directory permissions and ownership."
+echo "  --------------------"
+
+for U in charlie pi ubuntu; do
+    #echo -n "DEBUGGGG::: ${U} = "
+    for FIFO in "/home/${U}" "/home/${U}/.ssh" "/home/${U}/.ssh/authorized_keys"; do
+        if [[ -e ${FIFO} ]]; then               # If the file or directory exists....
+            RV=$(check_mode ${FIFO} "HOME")
+            #echo "INFO  ::::  RV=${RV}"
+            if [[ ${RV} -eq "GOOD" ]]; then
+                echo "    Mode for ${FIFO} is correct."
+            else
+                echo "WARNING  :::  Incorrect mode for ${FIFO}"
+            fi
+            CHECKS_RUN+=1
+            RV=$(check_owner ${FIFO} ${U})
+            if [[ ${RV} -eq "GOOD" ]]; then
+                echo "    Owner for ${FIFO} is correct"
+            else
+                echo "WARNING  :::  Incorrect owner for ${FIFO}!"
+            fi
+        else
+            echo "WARNING  :::  ${FIFO} does not exist."
+            SKIPPED_CHECKS+=1
+        fi
+    done
+done
+
+echo "  --------------------"
 echo "  Check if each user has ssh keys..."
 echo "  --------------------"
 for U in charlie pi ubuntu; do
@@ -218,6 +262,13 @@ for U in charlie pi ubuntu; do
     else
         echo "    .bashrc not located for ${U}....copying."
         cp files/.bashrc /home/${U}/
+	RV=$(check_owner /home/${U} ${U})
+	if [[ $RV -ne "GOOD" ]]; then
+		echo "      Fixing permissions on /home/${U}/.bashrc."
+		chown ${U} /home/${U}/.bash_aliases
+	else
+		echo "      Ownership for /home/${U}/.bash_aliases IS correct."
+	fi
     fi
 done
 CHECKS_RUN+=1
@@ -231,6 +282,13 @@ for U in charlie pi ubuntu; do
     else
         echo "    .bash_aliases not located for ${U}....copying."
         cp files/.bash_aliases /home/${U}/
+	RV=$(check_owner /home/${U} ${U})
+	if [[ $RV -ne "GOOD" ]]; then
+		echo "      Fixing permissions on /home/${U}/.bashrc."
+		chown ${U} /home/${U}/.bash_aliases
+	else
+		echo "      Ownership for /home/${U}/.bash_aliases IS correct."
+	fi
     fi
 done
 CHECKS_RUNS+=1
@@ -296,7 +354,7 @@ echo "====================### 003 VERIFY PACKAGES ###===================="
 echo "  --------------------"
 echo "  Checking desired packages are installed."
 echo "  --------------------"
-if [[ ${DISTRIB,,} == "ubuntu" || ${DISTRIB,,} == "debian" ]]; then
+if [[ ${OS_FAMILY,,} == "debian" ]]; then
     for PKG in aide apt-show-versions chkrootkit clamav clamav-freshclam cpanminus debsums fail2ban git htop libcrack2 net-tools ntopng pipx python3-pip rkhunter screen ufw vim wget; do
         if [[ $(is_installed ${PKG}) == "TRUE" ]]; then
             echo "      Installed: ${PKG}"
@@ -305,6 +363,18 @@ if [[ ${DISTRIB,,} == "ubuntu" || ${DISTRIB,,} == "debian" ]]; then
         fi
     done
     CHECKS_RUN+=1
+elif [[ ${OS_FAMILY,,} == "redhat" ]]; then
+	echo "  INFO  ::  OS_FAMILY = ${OS_FAMILY}"
+	for PKG in aide clamav clamav-freshclam perl-App-cpanminus fail2ban-all git-core git-all htop net-tools python3-pip rkhunter screen vim-enhanced wget; do
+		### TODO: Uncomment if needed for debugging.
+		#echo -n "  INFO  ::  Checking for package ${PKG}...."
+		if [[ $(is_installed ${PKG}) == "TRUE" ]]; then
+			echo "    Installed: ${PKG}"
+		else
+			echo "    NOT installed: ${PKG}"
+		fi
+	done
+	CHECKS_RUN+=1
 else
     echo "Unknown package manager.  Unable to check installed packages."
     SKIPPED_CHECKS+=1
@@ -314,46 +384,31 @@ fi
 echo "  --------------------"
 echo "  Ensure ssh is enabled at boot time."
 echo "  --------------------"
-if [[ $(systemctl status ssh | grep "Active" | cut -d" " -f7) == "active" ]]; then
-    echo "    ssh.service is currently running."
+SSHD="sshd.service"
+### TODO: Keep checking distro's to see if the below is needed and/or we need to
+### process running services differently based on distro.
+#case $OS_FAMILY in
+#	"debian")
+#		SSHD="ssh.service"
+#		;;
+#	"redhat")
+#		SSHD="sshd.service"
+#		;;
+#	*)
+#		SSHD="sshd"
+#		;;
+#esac
+if [[ $(systemctl status ${SSHD} | grep "Active" | awk '{print $2 }') == "active" ]]; then
+    echo "    ${SSHD} is currently running."
 else
-    echo "    ssh.service is NOT running."
+    echo "    ${SSHD} is NOT running."
 fi
-if [[ $(systemctl status ssh | grep "Loaded" | cut -d" " -f9 | sed -e 's/;//g') == "enabled" ]]; then
-    echo "    ssh.service is enabled."
+if [[ $(systemctl status ${SSHD} | grep "Loaded" | awk '{ print $4 }' | sed -e 's/;//g') == "enabled" ]]; then
+    echo "    ${SSHD} is enabled."
 else
-    echo "    ssh.service is NOT enabled."
+    echo "    ${SSHD} is NOT enabled."
 fi
 CHECKS_RUN+=1
-
-echo "  --------------------"
-echo "  Check the home directory permissions."
-echo "  --------------------"
-
-for U in charlie pi ubuntu; do
-    #echo -n "DEBUGGGG::: ${U} = "
-    for FIFO in "/home/${U}" "/home/${U}/.ssh" "/home/${U}/.ssh/authorized_keys"; do
-        if [[ -e ${FIFO} ]]; then               # If the file or directory exists....
-            RV=$(check_mode ${FIFO} "HOME")
-            #echo "INFO  ::::  RV=${RV}"
-            if [[ ${RV} -eq "GOOD" ]]; then
-                echo "    Mode for ${FIFO} is correct."
-            else
-                echo "WARNING  :::  Incorrect mode for ${FIFO}"
-            fi
-            CHECKS_RUN+=1
-            RV=$(check_owner ${FIFO} ${U})
-            if [[ ${RV} -eq "GOOD" ]]; then
-                echo "    Owner for ${FIFO} is correct"
-            else
-                echo "WARNING  :::  Incorrect owner for ${FIFO}!"
-            fi
-        else
-            echo "WARNING  :::  ${FIFO} does not exist."
-            SKIPPED_CHECKS+=1
-        fi
-    done
-done
 
 echo "  --------------------"
 echo "  Check the permissions on cron directories."
