@@ -188,7 +188,7 @@ for U in charlie pi ubuntu; do
 			exit 7
 		fi
 	elif [[ $OS_FAMILY == "debian" ]]; then
-		usermod -g admin,${U} ${U}
+		usermod -G admin,${U} ${U}
 		if [ $? -ne 0 ]; then
 			echo "ERROR :::: There was an unspecieid error."
 			echo "ERROR :::: (debian) (usermod)"
@@ -355,7 +355,7 @@ echo "  --------------------"
 echo "  Checking desired packages are installed."
 echo "  --------------------"
 if [[ ${OS_FAMILY,,} == "debian" ]]; then
-    for PKG in aide apt-show-versions chkrootkit clamav clamav-freshclam cpanminus debsums fail2ban git htop libcrack2 net-tools ntopng pipx python3-pip rkhunter screen ufw vim wget; do
+    for PKG in aide apt-show-versions chkrootkit clamav clamav-freshclam cpanminus debsums fail2ban git gnome-keyring htop libcrack2 net-tools ntopng pipx python3-pip rkhunter screen ufw vim wget; do
         if [[ $(is_installed ${PKG}) == "TRUE" ]]; then
             echo "      Installed: ${PKG}"
         else
