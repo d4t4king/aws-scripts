@@ -103,6 +103,20 @@ function check_owner() {
         echo "GOOD"
     fi
 }
+
+function fix_mode() {
+    FIFO=$1
+    WANT_MODE=$2
+    if [[ -e ${FIFO} ]]; then
+        chmod ${WANT_MODE} ${FIFO}
+        if [[ $? -ne 0 ]]; then
+            echo "ERROR  ::::  Unable to set mode on directory ${FIFO} to ${WANT_MODE}."
+            exit 12
+        fi
+    else
+        echo "WARNING  :::  Unrecognized filesystem object.  Expected file or directory."
+    fi
+}
 #####################################################################################################
 ### START MAIN
 #####################################################################################################
@@ -160,42 +174,41 @@ for U in charlie pi ubuntu; do
         echo "    Adding user '${U}' with primary group of 'sudo'..."
 	if [[ $OS_FAMILY == "redhat" ]]; then
 		useradd -m -k /etc/skel -g sudo -G wheel,${U} -s /bin/bash -c "${U}" ${U}
-		#useradd -m -k /etc/skel -g sudo -G wheel,test -s /bin/bash -c "This is a test" test
 		if [ $? -ne 0 ]; then
-			echo "ERROR :::: THERE WAS AN UNSPECIFIED ERROR!!!"
-			echo "ERROR :::: (redhat) (useradd)"
+			echo "ERROR  ::::  THERE WAS AN UNSPECIFIED ERROR!!!"
+			echo "ERROR  ::::  (redhat) (useradd)"
 			exit 5
 		fi
 	elif [[ $OS_FAMILY == "debian" ]]; then
-        	useradd -m -k /etc/skel -g sudo -s /bin/bash -c "${U}" ${U}
+        useradd -m -k /etc/skel -g sudo -s /bin/bash -c "${U}" ${U}
 		if [ $? -ne 0 ]; then
-			echo "ERROR :::: THERE WAS AN UNSPECIFIED ERROR!!!"
-			echo "ERROR :::: (debian) (useradd)"
+			echo "ERROR  ::::  THERE WAS AN UNSPECIFIED ERROR!!!"
+			echo "ERROR  ::::  (debian) (useradd)"
 			exit 6
 		fi
 	else
 		echo "    DISTRIB: ${DISTRIB}"
 		echo "    OS_FAMILY: ${OS_FAMILY}"
-		echo "UNABLE TO DETERMINE OS_FAMILY.  ${OS_FAMILY} is unrecognized."
+		echo "ERROR  ::::  UNABLE TO DETERMINE OS_FAMILY.  ${OS_FAMILY} is unrecognized."
 		exit 4
 	fi
 	echo "    Adding groups to user..."
 	if [[ $OS_FAMILY == "redhat" ]]; then
 		usermod -G admin,${U} ${U}
 		if [ $? -ne 0 ]; then
-			echo "ERROR :::: There was an unspecified error."
-			echo "ERROR :::: (redhat) (usermod)"
+			echo "ERROR  ::::  There was an unspecified error."
+			echo "ERROR  ::::  (redhat) (usermod)"
 			exit 7
 		fi
 	elif [[ $OS_FAMILY == "debian" ]]; then
 		usermod -G admin,${U} ${U}
 		if [ $? -ne 0 ]; then
-			echo "ERROR :::: There was an unspecieid error."
-			echo "ERROR :::: (debian) (usermod)"
+			echo "ERROR  ::::  There was an unspecieid error."
+			echo "ERROR  ::::  (debian) (usermod)"
 			exit 8
 		fi
 	else
-		echo "ERROR :::: Unrecognized OS_FAMILY=($OS_FAMILY)"
+		echo "ERROR  ::::  Unrecognized OS_FAMILY=($OS_FAMILY)"
 		exit 9
 	fi
     fi
@@ -216,6 +229,17 @@ for U in charlie pi ubuntu; do
                 echo "    Mode for ${FIFO} is correct."
             else
                 echo "WARNING  :::  Incorrect mode for ${FIFO}"
+                echo "         :::  Press ENTER to correct permissions on ${FIFO} to secure values."
+                read DUMMY
+                if [[ ${DUMMY,,} == "\n" || ${DUMMY,,} == "" ]]; then
+                    if [[ -d ${FIFO} ]]; then
+                        chmod 750 ${FIFO}
+                    elif [[ -f ${FIFO} ]]; then
+                        chmod 600 ${FIFO}
+                    else
+                        echo "WARNING  :::  Unable to determine if ${FIFO} is file or directory."
+                    fi
+                fi
             fi
             CHECKS_RUN+=1
             RV=$(check_owner ${FIFO} ${U})
@@ -339,8 +363,8 @@ else
         #echo "  INFO :: OS_FAMILY = ${OS_FAMILY,,}"
 	    yum makecache
 	    if [ $? -ne 0 ]; then
-		    echo "ERROR :::: Return code not 0 ($?)"
-		    echo "ERROR :::: (redhat) (yum makecache)"
+		    echo "ERROR  ::::  Return code not 0 ($?)"
+		    echo "ERROR  ::::  (redhat) (yum makecache)"
 		    exit 10
 	    fi
     else
@@ -427,6 +451,10 @@ for CRON in "/etc/cron.d" "/etc/cron.daily" "/etc/cron.hourly" "/etc/cron.monthl
         SKIPPED_CHECKS+=1
     fi
 done
+
+echo "  --------------------"
+echo "  Check the ownership of
+echo "  --------------------"
 
 echo "====================### AUDIT COMPLETE ###===================="
 echo "TOTAL_CHECKS: ${TOTAL_CHECKS}"
