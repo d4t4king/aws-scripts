@@ -452,9 +452,27 @@ for CRON in "/etc/cron.d" "/etc/cron.daily" "/etc/cron.hourly" "/etc/cron.monthl
     fi
 done
 
+echo "====================### 004 SECURITY CHECKS ###===================="
+
 echo "  --------------------"
-echo "  Check the ownership of .ssh directories in home"
+echo "  Lynis checks"
 echo "  --------------------"
+LYNDIR="/etc/lynis"
+CUSTOMF="${LYNDIR}/custom.prf"
+if [[ -e $LYNDIR ]]; then
+    if [[ -e $CUSTOMF ]]; then
+        echo "    Custom lynis profile file exists."
+        if [[ -f ${CUSTOMF} && ! -z ${CUSTOMF} ]]; then
+            echo "    Custom lynis profile is a file and is not zero (0) bytes."
+        else
+            echo "    Custom lynis profile is not a file or is zero (0) byes."
+        fi
+    else
+        echo "    Custom lynis profile does not exist."
+    fi
+else
+    each "WARNING  :::  Lynis custom profile directory does not exist."
+fi
 
 echo "====================### AUDIT COMPLETE ###===================="
 echo "TOTAL_CHECKS: ${TOTAL_CHECKS}"
