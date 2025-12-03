@@ -453,7 +453,7 @@ for CRON in "/etc/cron.d" "/etc/cron.daily" "/etc/cron.hourly" "/etc/cron.monthl
 done
 
 echo "  --------------------"
-echo "  Check the ownership of
+echo "  Check the ownership of .ssh directories in home"
 echo "  --------------------"
 
 echo "====================### AUDIT COMPLETE ###===================="
