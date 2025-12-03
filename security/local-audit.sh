@@ -40,8 +40,8 @@ function is_installed() {
 	get_distribution
 	if [[ ${DISTRIB,,} == "ubuntu" || ${DISTRIB,,} == "debian" ]]; then
 		FOUND=$(dpkg --get-selections | grep "\binstall\b" | cut -f1 | cut -d: -f1 | grep "^${PKG}$")
-	elif [[ ${DISTRIB,,} == "rocky" || ${DISTRIB,,} == "redhat" ]]; then
-		FOUND=$(dnf list installed | grep "${PKG}" | awk '{ print $1 }')
+	elif [[ ${DISTRIB,,} == "rocky" || ${DISTRIB,,} == "redhat" || ${DISTRIB,,} == "fedora" ]]; then
+		FOUND=$(dnf -q list installed 2>&1 | grep -v "No matching packages to list"| grep "${PKG}" | awk '{ print $1 }')
 	else
 		echo "ERROR  ::::  Unable to determine distribution from /etc/lsb-release or /etc/os-release."
 		exit 255
@@ -66,6 +66,9 @@ function check_mode() {
             ;;
         "CRON")
             C_MODE=( [file]=600 [directory]=700 )
+            ;;
+        "SSHD")
+            C_MODE=( [file]=650 [directory]=750 )
             ;;
         *)
             echo "Don't know how to handle mode type ${MODE_TYPE^^}"
@@ -140,7 +143,7 @@ get_distribution
 
 #Endeavor to derive the os family from DISTRIB
 # declare -A OS_FAMILY_LOOKUP
-declare -A OS_FAMILY_LOOKUP=( [ubuntu]="debian" [debian]="debian" [linuxmint]="debian" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
+declare -A OS_FAMILY_LOOKUP=( [ubuntu]="debian" [debian]="debian" [linuxmint]="debian" [fedora]="redhat" [rocky]="redhat" [rhel]="redhat" [centos]="redhat" )
 # echo "INFO  ::  OS_FAMILY_LOOKUP enumeration:"
 # echo "INFO  ::  ubuntu: ${OS_FAMILY_LOOKUP['ubuntu']}"
 # echo "INFO  ::  debian: ${OS_FAMILY_LOOKUP['debian']}"
@@ -388,7 +391,7 @@ if [[ ${OS_FAMILY,,} == "debian" ]]; then
     done
     CHECKS_RUN+=1
 elif [[ ${OS_FAMILY,,} == "redhat" ]]; then
-	echo "  INFO  ::  OS_FAMILY = ${OS_FAMILY}"
+	#echo "  INFO  ::  OS_FAMILY = ${OS_FAMILY}"
 	for PKG in aide clamav clamav-freshclam perl-App-cpanminus fail2ban-all git-core git-all htop net-tools python3-pip rkhunter screen vim-enhanced wget; do
 		### TODO: Uncomment if needed for debugging.
 		#echo -n "  INFO  ::  Checking for package ${PKG}...."
@@ -453,8 +456,32 @@ for CRON in "/etc/cron.d" "/etc/cron.daily" "/etc/cron.hourly" "/etc/cron.monthl
 done
 
 echo "  --------------------"
-echo "  Check the ownership of
+echo "  Check the ownership and mode of SSH-related files and folders."
 echo "  --------------------"
+for U in charlie pi ubuntu; do
+    for FIFO in "/home/${U}/.ssh" "/home/${U}/.ssh/authorized_keys" "/home/${U}/.ssh/id_rsa" "/home/${U}/.ssh/id_rsa.pub"; do
+        if [[ -e ${FIFO} ]]; then               # If the file or directory exists....
+            RV=$(check_mode ${FIFO} "SSHD")
+            #echo "INFO  ::::  RV=${RV}"
+            if [[ ${RV} -eq "GOOD" ]]; then
+                echo "    Mode for ${FIFO} is correct."
+            else
+                echo "WARNING  :::  Incorrect mode for ${FIFO}!"
+            fi
+            CHECKS_RUN+=1
+            RV=$(check_owner ${FIFO} "root")
+            if [[ ${RV} -eq "GOOD" ]]; then
+                echo "    Owner for ${FIFO} is correct. (root)"
+            else
+                echo "WARNING  :::  Incorrect owner for ${FIFO}!  (wanted: root)"
+            fi
+            CHECKS_RUN+=1
+        else
+            echo "WARNING  :::  ${FIFO} does not exist."
+            SKIPPED_CHECKS+=1
+        fi
+    done
+done
 
 echo "====================### AUDIT COMPLETE ###===================="
 echo "TOTAL_CHECKS: ${TOTAL_CHECKS}"
