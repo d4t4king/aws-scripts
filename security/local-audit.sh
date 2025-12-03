@@ -464,14 +464,20 @@ if [[ -e $LYNDIR ]]; then
         echo "    Custom lynis profile file exists."
         if [[ -f ${CUSTOMF} && ! -z ${CUSTOMF} ]]; then
             echo "    Custom lynis profile is a file and is not zero (0) bytes."
+            CHECKS_RUN+=1
         else
             echo "    Custom lynis profile is not a file or is zero (0) byes."
+            SKIPPED_CHECKS+=1
         fi
+        CHECKS_RUN+=1
     else
         echo "    Custom lynis profile does not exist."
+        SKIPPED_CHECKS+=2
     fi
+    CHECKS_RUN+=1
 else
     each "WARNING  :::  Lynis custom profile directory does not exist."
+    SKIPPED_CHECKS+=3   # 3 because 1 is for teh directory check, 1 is if the file exists and the 3rd is if the file is a file and NOT zero bytes.
 fi
 
 echo "====================### AUDIT COMPLETE ###===================="
