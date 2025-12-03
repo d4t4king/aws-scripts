@@ -452,10 +452,6 @@ for CRON in "/etc/cron.d" "/etc/cron.daily" "/etc/cron.hourly" "/etc/cron.monthl
     fi
 done
 
-echo "  --------------------"
-echo "  Check the ownership of
-echo "  --------------------"
-
 echo "====================### AUDIT COMPLETE ###===================="
 echo "TOTAL_CHECKS: ${TOTAL_CHECKS}"
 echo "CHECKS_RUN: ${CHECKS_RUN}"
