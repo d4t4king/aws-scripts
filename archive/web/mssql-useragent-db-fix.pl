@@ -42,7 +42,7 @@ while (my @row = $sth->fetchrow_array) {
 	$sql_uas{$row[1]}{'type_id'}    =   $type_ids{$row[3]};
 }
 
-my %to_write = ();;
+my %to_write = ();
 foreach my $ua ( sort keys %sql_uas ) {
 	$sth = $dbh->prepare("SELECT id FROM useragents2 WHERE useragent='".quotemeta($ua)."'");
 	$sth->execute();
