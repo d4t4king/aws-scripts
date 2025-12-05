@@ -24,6 +24,7 @@ import json
 import urllib.request
 import urllib.error
 import shutil
+import time
 from pathlib import Path
 from typing import List, Tuple, Optional, Dict
 
@@ -57,7 +58,8 @@ class CpanModuleInstaller:
     }
     
     def __init__(self, log_file: Optional[str] = None, assume_yes: bool = False,
-                 no_cpan: bool = False, install_cpanm: bool = False):
+                 no_cpan: bool = False, install_cpanm: bool = False,
+                 verbose_timing: bool = False, timing_json_file: Optional[str] = None):
         """
         Initialize the installer.
         
@@ -76,6 +78,8 @@ class CpanModuleInstaller:
         self.assume_yes = assume_yes
         self.no_cpan = no_cpan
         self.install_cpanm = install_cpanm
+        self.verbose_timing = verbose_timing
+        self.timing_json_file = timing_json_file
     
     def log(self, message: str, level: str = "INFO") -> None:
         """
@@ -535,42 +539,80 @@ class CpanModuleInstaller:
         skipped_modules = []
         not_found_modules = []
         cpan_skipped = []
+        timings = {}
 
         for module in self.modules:
-            package_name = self.convert_module_to_package(module)
-
-            # Check if package is already installed via system package manager
-            if self.is_package_installed(package_name):
-                self.log(f"Already installed: {module} ({package_name})", "SUCCESS")
-                skipped_modules.append(module)
-                continue
-
-            # Before attempting package installation, check if the Perl module
-            # is already installed locally (without system package)
-            if self.is_perl_module_installed(module):
-                self.log(f"Perl module already installed locally: {module}", "SUCCESS")
-                skipped_modules.append(module)
-                continue
-
-            if dry_run:
-                self.log(f"[DRY RUN] Would install: {package_name}", "INFO")
-                continue
-
+            start = time.time()
+            status = 'unknown'
+            step_times = {}
             try:
+                package_name = self.convert_module_to_package(module)
+
+                # Check if package is already installed via system package manager
+                if self.verbose_timing:
+                    t0 = time.time()
+                    pkg_inst = self.is_package_installed(package_name)
+                    step_times['package_check'] = time.time() - t0
+                else:
+                    pkg_inst = self.is_package_installed(package_name)
+
+                if pkg_inst:
+                    self.log(f"Already installed: {module} ({package_name})", "SUCCESS")
+                    skipped_modules.append(module)
+                    status = 'skipped_package'
+                    # record timings if verbose
+                    if self.verbose_timing:
+                        timings[module] = {'seconds': time.time() - start, 'status': status, 'steps': step_times}
+                    continue
+
+                # Before attempting package installation, check if the Perl module
+                # is already installed locally (without system package)
+                if self.verbose_timing:
+                    t0 = time.time()
+                    perl_inst = self.is_perl_module_installed(module)
+                    step_times['perl_check'] = time.time() - t0
+                else:
+                    perl_inst = self.is_perl_module_installed(module)
+
+                if perl_inst:
+                    self.log(f"Perl module already installed locally: {module}", "SUCCESS")
+                    skipped_modules.append(module)
+                    status = 'skipped_local'
+                    if self.verbose_timing and module not in timings:
+                        timings[module] = {'seconds': time.time() - start, 'status': status, 'steps': step_times}
+                    continue
+
+                if dry_run:
+                    self.log(f"[DRY RUN] Would install: {package_name}", "INFO")
+                    status = 'dry_run'
+                    continue
+
                 self.log(f"Installing {module} ({package_name})...", "INFO")
                 cmd = f"{self.package_manager_cmd} {package_name}"
 
-                result = subprocess.run(
-                    cmd,
-                    shell=True,
-                    capture_output=True,
-                    text=True,
-                    timeout=300
-                )
+                if self.verbose_timing:
+                    t0 = time.time()
+                    result = subprocess.run(
+                        cmd,
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=300
+                    )
+                    step_times['package_install'] = time.time() - t0
+                else:
+                    result = subprocess.run(
+                        cmd,
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=300
+                    )
 
                 if result.returncode == 0:
                     self.log(f"Successfully installed: {module}", "SUCCESS")
                     successful_modules.append(module)
+                    status = 'installed_package'
                 else:
                     # Check if this is a "package not found" error
                     stderr_lower = (result.stderr or '').lower()
@@ -600,9 +642,15 @@ class CpanModuleInstaller:
                         if self.no_cpan:
                             self.log(f"CPAN search disabled by --no-cpan flag", "INFO")
                             not_found_modules.append(module)
+                            status = 'not_found_no_cpan'
                         else:
                             # Search CPAN for this module
-                            cpan_result = self.search_cpan(module)
+                            if self.verbose_timing:
+                                t0 = time.time()
+                                cpan_result = self.search_cpan(module)
+                                step_times['cpan_search'] = time.time() - t0
+                            else:
+                                cpan_result = self.search_cpan(module)
                             if cpan_result:
                                 # If dry_run we just report; otherwise ask the user
                                 if dry_run:
@@ -611,6 +659,7 @@ class CpanModuleInstaller:
                                         "INFO"
                                     )
                                     not_found_modules.append(module)
+                                    status = 'found_on_cpan_dryrun'
                                 else:
                                     # Use assume_yes flag to skip prompting
                                     if self.assume_yes:
@@ -618,12 +667,20 @@ class CpanModuleInstaller:
                                         if os.geteuid() != 0:
                                             self.log("Root privileges are required to install from CPAN. Skipping.", "ERROR")
                                             failed_modules.append(module)
+                                            status = 'failed_no_root_for_cpan'
                                         else:
-                                            ok = self.install_from_cpan(module)
+                                            if self.verbose_timing:
+                                                t0 = time.time()
+                                                ok = self.install_from_cpan(module)
+                                                step_times['cpan_install'] = time.time() - t0
+                                            else:
+                                                ok = self.install_from_cpan(module)
                                             if ok:
                                                 successful_modules.append(module)
+                                                status = 'installed_cpan'
                                             else:
                                                 failed_modules.append(module)
+                                                status = 'failed_cpan'
                                     else:
                                         # Prompt user for confirmation
                                         while True:
@@ -633,35 +690,80 @@ class CpanModuleInstaller:
                                                 if os.geteuid() != 0:
                                                     self.log("Root privileges are required to install from CPAN. Skipping.", "ERROR")
                                                     failed_modules.append(module)
+                                                    status = 'failed_no_root_for_cpan'
                                                     break
-                                                ok = self.install_from_cpan(module)
+                                                if self.verbose_timing:
+                                                    t0 = time.time()
+                                                    ok = self.install_from_cpan(module)
+                                                    step_times['cpan_install'] = time.time() - t0
+                                                else:
+                                                    ok = self.install_from_cpan(module)
                                                 if ok:
                                                     successful_modules.append(module)
+                                                    status = 'installed_cpan'
                                                 else:
                                                     failed_modules.append(module)
+                                                    status = 'failed_cpan'
                                                 break
                                             elif resp in ['no', 'n']:
                                                 self.log(f"User chose not to install {module} from CPAN", "WARNING")
                                                 cpan_skipped.append(module)
                                                 not_found_modules.append(module)
+                                                status = 'cpan_skipped_by_user'
                                                 break
                                             else:
                                                 print("Please answer 'yes' or 'no'.")
                             else:
                                 not_found_modules.append(module)
+                                status = 'not_found_on_cpan'
                     else:
                         self.log(
                             f"Failed to install {module}. Error: {result.stderr}",
                             "ERROR"
                         )
                         failed_modules.append(module)
+                        status = 'failed_install'
 
             except subprocess.TimeoutExpired:
                 self.log(f"Installation timeout for: {module}", "ERROR")
                 failed_modules.append(module)
+                status = 'timeout'
             except Exception as e:
                 self.log(f"Error installing {module}: {e}", "ERROR")
                 failed_modules.append(module)
+                status = 'error'
+            finally:
+                duration = time.time() - start
+                # Include per-step timings when verbose_timing is enabled
+                if self.verbose_timing and step_times:
+                    timings[module] = {'seconds': duration, 'status': status, 'steps': step_times}
+                else:
+                    timings[module] = {'seconds': duration, 'status': status}
+
+        # After processing modules, print timing summary
+        if timings:
+            print("\n" + "="*60)
+            print("Per-module timing summary (slowest first):")
+            print("="*60)
+            # Sort by duration descending
+            sorted_timings = sorted(timings.items(), key=lambda x: x[1]['seconds'], reverse=True)
+            for mod, info in sorted_timings:
+                print(f"{mod:30} {info['seconds']:8.2f}s  {info['status']}")
+            print("="*60 + "\n")
+            # Also log timings if requested
+            if self.log_file:
+                for mod, info in sorted_timings:
+                    self.log_buffer.append(f"TIMING {mod} {info['seconds']:.2f}s {info['status']}")
+
+        # If requested, write machine-readable timing JSON
+        if self.timing_json_file:
+            try:
+                # Serialize timings; ensure floats are serializable
+                with open(self.timing_json_file, 'w') as jf:
+                    json.dump(timings, jf, indent=2)
+                self.log(f"Wrote timing JSON to {self.timing_json_file}", "SUCCESS")
+            except Exception as e:
+                self.log(f"Failed to write timing JSON: {e}", "ERROR")
 
         # Summary
         print("\n" + "="*60)
@@ -702,19 +804,22 @@ class CpanModuleInstaller:
         )
 
         return len(failed_modules) == 0
-    
+
     def run(self, specified_path: Optional[str] = None, dry_run: bool = False,
-            assume_yes: bool = False, no_cpan: bool = False, install_cpanm: bool = False) -> bool:
+            assume_yes: bool = False, no_cpan: bool = False, install_cpanm: bool = False,
+            verbose_timing: bool = False, timing_json_file: Optional[str] = None) -> bool:
         """
         Main execution method.
-        
+
         Args:
             specified_path: Optional path to cpanfile or directory
             dry_run: If True, show what would be installed without installing
             assume_yes: Automatically answer 'yes' to CPAN install prompts
             no_cpan: Never consult or install from CPAN
             install_cpanm: Automatically install cpanminus if not present
-            
+            verbose_timing: Collect verbose per-step timing
+            timing_json_file: Path to write timing JSON output
+
         Returns:
             True if successful, False otherwise
         """
@@ -722,6 +827,8 @@ class CpanModuleInstaller:
         self.assume_yes = assume_yes
         self.no_cpan = no_cpan
         self.install_cpanm = install_cpanm
+        self.verbose_timing = verbose_timing
+        self.timing_json_file = timing_json_file
         # Step 1: Find cpanfile
         if not self.find_cpanfile(specified_path):
             self.write_log()
@@ -801,6 +908,15 @@ Examples:
         action='store_true',
         help='Automatically install cpanminus (cpanm) if not already present'
     )
+    parser.add_argument(
+        '--verbose-timing',
+        action='store_true',
+        help='Collect and display verbose per-step timing information'
+    )
+    parser.add_argument(
+        '--timing-json',
+        help='Write per-module timing information to JSON file'
+    )
     
     args = parser.parse_args()
 
@@ -813,7 +929,9 @@ Examples:
         log_file=args.log_file,
         assume_yes=args.assume_yes,
         no_cpan=args.no_cpan,
-        install_cpanm=args.install_cpanm
+        install_cpanm=args.install_cpanm,
+        verbose_timing=args.verbose_timing,
+        timing_json_file=args.timing_json
     )
     
     # Run installer
@@ -822,7 +940,9 @@ Examples:
         dry_run=args.dry_run,
         assume_yes=args.assume_yes,
         no_cpan=args.no_cpan,
-        install_cpanm=args.install_cpanm
+        install_cpanm=args.install_cpanm,
+        verbose_timing=args.verbose_timing,
+        timing_json_file=args.timing_json
     )
     
     sys.exit(0 if success else 1)
