@@ -23,6 +23,7 @@ import argparse
 import json
 import urllib.request
 import urllib.error
+import shutil
 from pathlib import Path
 from typing import List, Tuple, Optional, Dict
 
@@ -55,12 +56,16 @@ class CpanModuleInstaller:
         'alpine': ('apk', 'apk add'),
     }
     
-    def __init__(self, log_file: Optional[str] = None):
+    def __init__(self, log_file: Optional[str] = None, assume_yes: bool = False,
+                 no_cpan: bool = False, install_cpanm: bool = False):
         """
         Initialize the installer.
         
         Args:
             log_file: Optional path to log file for output
+            assume_yes: Automatically answer 'yes' to CPAN install prompts
+            no_cpan: Never consult or install from CPAN
+            install_cpanm: Automatically install cpanminus if not present
         """
         self.log_file = log_file
         self.log_buffer = []
@@ -68,6 +73,9 @@ class CpanModuleInstaller:
         self.cpanfile_path = None
         self.package_manager = None
         self.package_manager_cmd = None
+        self.assume_yes = assume_yes
+        self.no_cpan = no_cpan
+        self.install_cpanm = install_cpanm
     
     def log(self, message: str, level: str = "INFO") -> None:
         """
@@ -375,6 +383,105 @@ class CpanModuleInstaller:
             self.log(f"Unexpected error searching CPAN for {module_name}: {e}", "WARNING")
         
         return None
+
+    def is_perl_module_installed(self, module_name: str) -> bool:
+        """
+        Check if a Perl module is already installed locally by attempting to
+        load it with the Perl interpreter.
+
+        Args:
+            module_name: Perl module name (e.g., 'JSON::XS')
+
+        Returns:
+            True if perl can load the module, False otherwise
+        """
+        try:
+            # Use perl -MModule::Name -e 1 which returns 0 if module loads
+            perl_module = module_name
+            cmd = ['perl', f'-M{perl_module}', '-e', '1']
+            result = subprocess.run(cmd, capture_output=True, timeout=10)
+            return result.returncode == 0
+        except Exception as e:
+            self.log(f"Error checking local Perl module {module_name}: {e}", "WARNING")
+            return False
+
+    def ensure_cpanm_installed(self) -> bool:
+        """
+        Ensure cpanminus (cpanm) is installed. Attempt to install if not present
+        and install_cpanm flag is set.
+
+        Returns:
+            True if cpanm is available or successfully installed, False otherwise
+        """
+        cpanm_path = shutil.which('cpanm')
+        if cpanm_path:
+            return True
+
+        if not self.install_cpanm:
+            return False
+
+        try:
+            self.log("cpanm not found; attempting to install cpanminus...", "INFO")
+            # Use cpan to install App::cpanminus
+            result = subprocess.run(
+                ['cpan', 'App::cpanminus'],
+                capture_output=True,
+                text=True,
+                timeout=600
+            )
+            if result.returncode == 0:
+                self.log("Successfully installed cpanminus", "SUCCESS")
+                return True
+            else:
+                self.log(f"Failed to install cpanminus: {result.stderr}", "ERROR")
+                return False
+        except Exception as e:
+            self.log(f"Error installing cpanminus: {e}", "ERROR")
+            return False
+
+    def install_from_cpan(self, module_name: str) -> bool:
+        """
+        Install a Perl module from CPAN. Prefer `cpanm` if available, otherwise
+        fall back to the stock `cpan` installer.
+
+        Args:
+            module_name: Perl module name to install
+
+        Returns:
+            True if installation succeeded, False otherwise
+        """
+        try:
+            # Try to ensure cpanm is available if install_cpanm flag is set
+            if self.install_cpanm:
+                self.ensure_cpanm_installed()
+
+            # Prefer cpanminus if installed
+            cpanm_path = shutil.which('cpanm')
+            if cpanm_path:
+                cmd = [cpanm_path, module_name]
+            else:
+                # Use the CPAN shell non-interactively
+                cpan_path = shutil.which('cpan')
+                if not cpan_path:
+                    self.log('Neither cpanm nor cpan found; cannot install from CPAN', 'ERROR')
+                    return False
+                cmd = [cpan_path, '-i', module_name]
+
+            self.log(f"Installing {module_name} from CPAN using: {' '.join(cmd)}", "INFO")
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+            if result.returncode == 0:
+                self.log(f"Successfully installed {module_name} from CPAN", "SUCCESS")
+                return True
+            else:
+                self.log(f"CPAN install failed for {module_name}: {result.stderr}", "ERROR")
+                return False
+
+        except subprocess.TimeoutExpired:
+            self.log(f"CPAN installation timed out for {module_name}", "ERROR")
+            return False
+        except Exception as e:
+            self.log(f"Error installing {module_name} from CPAN: {e}", "ERROR")
+            return False
     
     def get_user_confirmation(self) -> bool:
         """
@@ -418,33 +525,41 @@ class CpanModuleInstaller:
         if not self.package_manager or not self.package_manager_cmd:
             self.log("Package manager not detected or configured", "ERROR")
             return False
-        
+
         if not self.modules:
             self.log("No modules to install", "WARNING")
             return False
-        
+
         failed_modules = []
         successful_modules = []
         skipped_modules = []
         not_found_modules = []
-        
+        cpan_skipped = []
+
         for module in self.modules:
             package_name = self.convert_module_to_package(module)
-            
-            # Check if package is already installed
+
+            # Check if package is already installed via system package manager
             if self.is_package_installed(package_name):
                 self.log(f"Already installed: {module} ({package_name})", "SUCCESS")
                 skipped_modules.append(module)
                 continue
-            
+
+            # Before attempting package installation, check if the Perl module
+            # is already installed locally (without system package)
+            if self.is_perl_module_installed(module):
+                self.log(f"Perl module already installed locally: {module}", "SUCCESS")
+                skipped_modules.append(module)
+                continue
+
             if dry_run:
                 self.log(f"[DRY RUN] Would install: {package_name}", "INFO")
                 continue
-            
+
             try:
                 self.log(f"Installing {module} ({package_name})...", "INFO")
                 cmd = f"{self.package_manager_cmd} {package_name}"
-                
+
                 result = subprocess.run(
                     cmd,
                     shell=True,
@@ -452,16 +567,15 @@ class CpanModuleInstaller:
                     text=True,
                     timeout=300
                 )
-                
+
                 if result.returncode == 0:
                     self.log(f"Successfully installed: {module}", "SUCCESS")
                     successful_modules.append(module)
                 else:
                     # Check if this is a "package not found" error
-                    stderr_lower = result.stderr.lower()
-                    stdout_lower = result.stdout.lower()
-                    
-                    # Common "not found" messages across different package managers
+                    stderr_lower = (result.stderr or '').lower()
+                    stdout_lower = (result.stdout or '').lower()
+
                     not_found_indicators = [
                         'not found',
                         'no package',
@@ -470,84 +584,144 @@ class CpanModuleInstaller:
                         'no matching package',
                         'could not find a match',
                     ]
-                    
+
                     is_not_found = any(
                         indicator in stderr_lower or indicator in stdout_lower
                         for indicator in not_found_indicators
                     )
-                    
+
                     if is_not_found:
                         self.log(
                             f"Package not found in system repository: {package_name}",
                             "WARNING"
                         )
-                        # Search CPAN for this module
-                        cpan_result = self.search_cpan(module)
-                        if cpan_result:
-                            self.log(
-                                f"Module exists on CPAN (v{cpan_result.get('version', 'unknown')}). "
-                                f"Try installing with: cpan install {module}",
-                                "INFO"
-                            )
-                        not_found_modules.append(module)
+
+                        # Skip CPAN search if no_cpan flag is set
+                        if self.no_cpan:
+                            self.log(f"CPAN search disabled by --no-cpan flag", "INFO")
+                            not_found_modules.append(module)
+                        else:
+                            # Search CPAN for this module
+                            cpan_result = self.search_cpan(module)
+                            if cpan_result:
+                                # If dry_run we just report; otherwise ask the user
+                                if dry_run:
+                                    self.log(
+                                        f"[DRY RUN] Found on CPAN: {module} v{cpan_result.get('version', 'unknown')}",
+                                        "INFO"
+                                    )
+                                    not_found_modules.append(module)
+                                else:
+                                    # Use assume_yes flag to skip prompting
+                                    if self.assume_yes:
+                                        self.log(f"Auto-accepting CPAN install for {module} (--assume-yes)", "INFO")
+                                        if os.geteuid() != 0:
+                                            self.log("Root privileges are required to install from CPAN. Skipping.", "ERROR")
+                                            failed_modules.append(module)
+                                        else:
+                                            ok = self.install_from_cpan(module)
+                                            if ok:
+                                                successful_modules.append(module)
+                                            else:
+                                                failed_modules.append(module)
+                                    else:
+                                        # Prompt user for confirmation
+                                        while True:
+                                            resp = input(f"Module {module} found on CPAN (v{cpan_result.get('version','unknown')}). Install from CPAN? (yes/no): ").strip().lower()
+                                            if resp in ['yes', 'y']:
+                                                # Ensure we have root privileges to install
+                                                if os.geteuid() != 0:
+                                                    self.log("Root privileges are required to install from CPAN. Skipping.", "ERROR")
+                                                    failed_modules.append(module)
+                                                    break
+                                                ok = self.install_from_cpan(module)
+                                                if ok:
+                                                    successful_modules.append(module)
+                                                else:
+                                                    failed_modules.append(module)
+                                                break
+                                            elif resp in ['no', 'n']:
+                                                self.log(f"User chose not to install {module} from CPAN", "WARNING")
+                                                cpan_skipped.append(module)
+                                                not_found_modules.append(module)
+                                                break
+                                            else:
+                                                print("Please answer 'yes' or 'no'.")
+                            else:
+                                not_found_modules.append(module)
                     else:
                         self.log(
                             f"Failed to install {module}. Error: {result.stderr}",
                             "ERROR"
                         )
                         failed_modules.append(module)
-            
+
             except subprocess.TimeoutExpired:
                 self.log(f"Installation timeout for: {module}", "ERROR")
                 failed_modules.append(module)
             except Exception as e:
                 self.log(f"Error installing {module}: {e}", "ERROR")
                 failed_modules.append(module)
-        
+
         # Summary
         print("\n" + "="*60)
         print("Installation Summary")
         print("="*60)
         print(f"Successful: {len(successful_modules)}/{len(self.modules)}")
-        print(f"Already installed: {len(skipped_modules)}/{len(self.modules)}")
+        print(f"Already installed / Skipped: {len(skipped_modules)}/{len(self.modules)}")
         if not_found_modules:
             print(f"Not found in repository: {len(not_found_modules)}/{len(self.modules)}")
+        if cpan_skipped:
+            print(f"Found on CPAN but skipped by user: {len(cpan_skipped)}/{len(self.modules)}")
         if failed_modules:
             print(f"Failed: {len(failed_modules)}/{len(self.modules)}")
-        
+
         # Print details
         if not_found_modules:
-            print("\nPackages not found in system repository (but checked on CPAN):")
+            print("\nPackages not found in system repository (but may exist on CPAN):")
             for module in not_found_modules:
                 print(f"  - {module}")
-        
+
+        if cpan_skipped:
+            print("\nModules found on CPAN but skipped by user:")
+            for module in cpan_skipped:
+                print(f"  - {module}")
+
         if failed_modules:
             print("\nFailed modules (other errors):")
             for module in failed_modules:
                 print(f"  - {module}")
-        
+
         print("="*60 + "\n")
-        
+
         self.log(
             f"Installation complete: {len(successful_modules)} successful, "
             f"{len(skipped_modules)} skipped, {len(not_found_modules)} not found, "
             f"{len(failed_modules)} failed",
             "INFO"
         )
-        
+
         return len(failed_modules) == 0
     
-    def run(self, specified_path: Optional[str] = None, dry_run: bool = False) -> bool:
+    def run(self, specified_path: Optional[str] = None, dry_run: bool = False,
+            assume_yes: bool = False, no_cpan: bool = False, install_cpanm: bool = False) -> bool:
         """
         Main execution method.
         
         Args:
             specified_path: Optional path to cpanfile or directory
             dry_run: If True, show what would be installed without installing
+            assume_yes: Automatically answer 'yes' to CPAN install prompts
+            no_cpan: Never consult or install from CPAN
+            install_cpanm: Automatically install cpanminus if not present
             
         Returns:
             True if successful, False otherwise
         """
+        # Update instance flags
+        self.assume_yes = assume_yes
+        self.no_cpan = no_cpan
+        self.install_cpanm = install_cpanm
         # Step 1: Find cpanfile
         if not self.find_cpanfile(specified_path):
             self.write_log()
@@ -581,19 +755,20 @@ class CpanModuleInstaller:
 
 def main():
     """Main entry point."""
-    # Check root privileges first
-    check_root_privileges()
-    
     parser = argparse.ArgumentParser(
         description='Find and parse cpanfile, then install Perl modules',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  sudo %(prog)s                          # Look for cpanfile in current directory
-  sudo %(prog)s /path/to/directory       # Look for cpanfile in specified directory
-  sudo %(prog)s /path/to/cpanfile        # Use specified cpanfile directly
-  sudo %(prog)s --log-file install.log   # Log output to file
-  sudo %(prog)s --dry-run                # Show what would be installed without installing
+  sudo %(prog)s                               # Look for cpanfile in current directory
+  sudo %(prog)s /path/to/directory            # Look for cpanfile in specified directory
+  sudo %(prog)s /path/to/cpanfile             # Use specified cpanfile directly
+  sudo %(prog)s --log-file install.log        # Log output to file
+  %(prog)s --dry-run                          # Show plan without installing (no sudo needed)
+  sudo %(prog)s --assume-yes                  # Non-interactive: auto-accept CPAN installs
+  sudo %(prog)s --no-cpan                     # Skip CPAN; only use system packages
+  sudo %(prog)s --install-cpanm               # Auto-install cpanminus if needed
+  sudo %(prog)s --assume-yes --install-cpanm  # Combine flags for fully automated install
         """
     )
     
@@ -611,14 +786,44 @@ Examples:
         action='store_true',
         help='Show what would be installed without actually installing'
     )
+    parser.add_argument(
+        '--assume-yes',
+        action='store_true',
+        help='Automatically answer yes to CPAN install prompts (non-interactive)'
+    )
+    parser.add_argument(
+        '--no-cpan',
+        action='store_true',
+        help='Never consult or install from CPAN'
+    )
+    parser.add_argument(
+        '--install-cpanm',
+        action='store_true',
+        help='Automatically install cpanminus (cpanm) if not already present'
+    )
     
     args = parser.parse_args()
+
+    # Only require root privileges when not doing a dry-run
+    if not args.dry_run:
+        check_root_privileges()
     
     # Create installer
-    installer = CpanModuleInstaller(log_file=args.log_file)
+    installer = CpanModuleInstaller(
+        log_file=args.log_file,
+        assume_yes=args.assume_yes,
+        no_cpan=args.no_cpan,
+        install_cpanm=args.install_cpanm
+    )
     
     # Run installer
-    success = installer.run(specified_path=args.path, dry_run=args.dry_run)
+    success = installer.run(
+        specified_path=args.path,
+        dry_run=args.dry_run,
+        assume_yes=args.assume_yes,
+        no_cpan=args.no_cpan,
+        install_cpanm=args.install_cpanm
+    )
     
     sys.exit(0 if success else 1)
 
