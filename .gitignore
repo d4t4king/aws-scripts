@@ -4,3 +4,16 @@ open-relay/
 oldscripts.tar.xz
 .access-log-parser.rb
 lastip
+*.pyc
+*.pyo
+__pycache__/
+*.swp
+*.swo
+.DS_Store
+.vscode/
+.idea/
+node_modules/
+.env
+.env.local
+.env.*.local
+
