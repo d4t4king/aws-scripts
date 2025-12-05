@@ -1,5 +1,5 @@
 requires Cwd;
-requires Data::Dumper;
+requires Data::Dumper::Simple;
 requires Geo::IP::PurePerl;
 requires Getopt::Long;
 requires IO::Interface::Simple;
