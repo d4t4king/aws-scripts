@@ -1,5 +1,12 @@
 #!/bin/bash
 
+################################################
+### 12/5/2025
+### Script to pull latest changes from GitHub repo to all AWS instances
+### This script is now deprecated as we have moved to using Ansible for configuration management.
+### However, it is kept here for reference.
+################################################
+
 #self 
 git pull https://github.com/d4t4king/aws-scripts master
 
