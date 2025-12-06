@@ -1,7 +1,7 @@
 #!/bin/bash
 
 for F in `ls -1 /var/log/nginx/access.log*`; do
-	if [ `basename $F | awk -F. '{ print $4 }'`=="gz" ]; then
+	if [ $(basename $F | awk -F. '{ print $4 }') == "gz" ]; then
 		zcat $F >> /tmp/access_log.tmp
 	else
 		cat $F >> /tmp/access_log.tmp
