@@ -1,0 +1,17 @@
+argparse
+datetime
+iptc
+json
+os
+pathlib
+platform
+pprint
+re
+shutil
+subprocess
+sys
+termcolor
+time
+typing
+urllib3
+yaml
