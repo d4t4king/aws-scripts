@@ -5,6 +5,7 @@ require 'Digest::MD5', 2.55;
 require 'Digest::SHA', 5.96;
 require 'Digest::Tiger', 0.0.3;
 require 'Geo::IP::PurePerl', 1.26;
+require 'IO::Interface::Simple', >1.0.0;
 require 'IPTables::ChainMgr', 1.5;
 require 'MIME::Lite', 3.030;
 require 'Network::IPv4Addr', 0.10;
