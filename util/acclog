@@ -7,7 +7,7 @@ use IO::Zlib;
 
 my @alllines;
 my $dir = "/var/log/nginx";
-opendir(DIR, $dir) or die "Couldn't open log directory: $! \n";
+opendir(DIR, $dir) or die "Couldn't open log directory ($dir): $! \n";
 while (my $file = readdir(DIR)) {
 	chomp($file);
 	if ($file =~ /^access/) {

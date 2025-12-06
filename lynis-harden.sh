@@ -5,7 +5,7 @@
 # be implemented and are ignored in the charlie.prf
 # lynis profile.
 
-sysctl_update() {
+function sysctl_update() {
 #set -x
 	# accepts 2 options:
 	# 	sysctl key to be changed ($1)
@@ -33,7 +33,7 @@ sysctl_update() {
 #set +x
 }
 
-is_installed() {
+function is_installed() {
 	PKG=$1
 	SILENT=$2
 	FOUND=$(dpkg --get-selections | grep "\binstall\b" | cut -f1 | cut -d: -f1 | grep "^${PKG}$")
@@ -57,7 +57,8 @@ fi
 
 
 if [ $(id -u) != 0 ]; then
-	echo "This script must be run as root.\n";
+	echo "This script must be run as root.\n"
+	exit 1
 fi
 
 # check for the skip list/profile
