@@ -29,7 +29,7 @@ foreach my $r ( @iptables ) {
 #print Dumper(%iptables);
 #exit 0;
 
-# set template excpetions, i.e. things that are in the template but not local.
+# set template exceptions, i.e. things that are in the template but not local.
 foreach my $r ( keys %template ) {
 	chomp($r);
 	if (exists($iptables{$r})) { next; } 
