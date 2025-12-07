@@ -24,7 +24,18 @@ def main():
         cprint(f"File not found: {args.inputfile}", 'red')
         exit(1)
     
-    pp.pprint(data)
+    hosts = dict()
+    #pp.pprint(data['allhosts'])
+    for k1 in data.keys():
+        if 'hosts' in data[k1].keys():
+            #pp.pprint(data[k1])
+            #pp.pprint(data[k1]['hosts'])
+            for k2 in data[k1]['hosts'].keys():
+                #pp.pprint(data[k1]['hosts'][k2])
+                if data[k1]['hosts'][k2] is not None:
+                    if 'ansible_host' in data[k1]['hosts'][k2].keys():
+                        hostname = k2.replace('_', '.')
+                        print(f"{data[k1]['hosts'][k2]['ansible_host']}\t{hostname}")
 
 if __name__ == "__main__":
     main()
