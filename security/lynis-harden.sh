@@ -45,6 +45,21 @@ function is_installed() {
 	fi
 }
 
+function is_promisc() {
+	IFACE=$1
+	echo "INFO :: Got interface ${IFACE} to check"
+	PROMISC=$(ip -d -o link show | grep "promiscuity 1" | awk '{ print$2 }' | sed -e 's/://g')
+	echo "INFO :: PROMISCUOUS INTERFACE: ${PROMISC}" &>2
+	if [[ $PROMISC == $IFACE ]]; then
+		echo "TRUE"
+	else
+		echo "FALSE"
+	fi
+}
+
+##############################################################
+# START MAIN SCRIPT
+##############################################################
 if [ -e /etc/gentoo-release -a ! -z /etc/gentoo-release ]; then
 	OS="gentoo"
 elif [ -e /etc/debian_version -a ! -z /etc/debian_version ]; then
@@ -393,7 +408,15 @@ for D in /etc/cron.d /etc/cups /etc/cupshelpers; do
 done
 
 # set interfaces NOT in promicuos mode.
-	
+declare -A INTERFACES
+INTERFACES=$(ip -d -o link show | awk '{ print $2 }' | sed -e 's/://g')
+for IF in $INTERFACES; do
+	if [[ $(is_promisc ${IF}) == "TRUE" ]]; then
+		echo "${IF} is in promiscuous mode."
+	else
+		echo "${IF} is not in promiscuous mode."
+	fi
+done
 
 echo "Script done."
 
