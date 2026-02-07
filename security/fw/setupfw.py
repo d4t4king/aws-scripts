@@ -25,7 +25,7 @@ def is_root() -> bool:
     import os
     return os.geteuid() == 0
 
-def get_ifaces():
+def get_ifaces() -> list:
     """
     Get the network interfaces from /proc/net/dev
 
