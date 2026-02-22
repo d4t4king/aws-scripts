@@ -21,7 +21,7 @@ def check_root_privileges() -> None:
     """
     if os.geteuid() != 0:
         cprint("ERROR: This script must be run as root or with sudo", "red")
-        print("Usage: sudo ./install-cpan-modules.py [options]")
+        print(f"Usage: sudo ./{__name__} [options]")
         sys.exit(1)
 
 def get_line_count(afile: str) -> int:
