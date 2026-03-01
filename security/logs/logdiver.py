@@ -46,6 +46,10 @@ def main():
 
     # [Fri Feb 20 00:00:06.259891 2026] [core:notice] [pid 884:tid 884] AH00094: Command line: '/usr/sbin/apache2'
     core_notice_rgx = re.compile(r"\s+\[core:notice\]\s+")
+    # '[Sun Feb 22 20:17:08.224872 2026] [mpm_event:notice] [pid 906:tid 906] '
+    # 'AH00489: Apache/2.4.66 (Debian) configured -- resuming normal '
+    # 'operations\n'
+    mpm_event_notice_rgx = re.compile(r"\s+\[mpm_event:notice\]\s+")
     # 52.169.14.74 - - [05/Aug/2025:14:59:04 +0000] "GET /y.php HTTP/1.1" 404 162 "-" "-"
     nginx_log_1_rgx = re.compile(r"((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*\-\s*.*?\s*\[(.*?)\]\s*\"(.*?)\"\s*(\d+)\s*\d+\s*\".*?\"\s*\"(.*?)\"")
     # logs should be http/apache/nginx access logs
@@ -54,7 +58,7 @@ def main():
         for line in inf.readlines():
             if args.verbose:
                 print(f"INFO :: Processing line: {line.strip()}")
-    #   skip empty lines
+            #   skip empty lines
             if re.search(r"^\s*$", line):
                 if 'blank' in msg_type_count.keys():
                     msg_type_count['blank'] += 1
@@ -69,6 +73,13 @@ def main():
                     msg_type_count['core_notice'] = 1
                 print(f"INFO :: Adding increment 1 to core_notice line total: {msg_type_count['core_notice']}")
                 # This is mainly about service start and stop.  We don't really care about these messages.
+                continue
+            if re.search(mpm_event_notice_rgx, line):
+                if 'mpm_event_notice' in msg_type_count.keys():
+                    msg_type_count['mpm_event_notice'] += 1
+                else:
+                    msg_type_count['mpm_event_notice'] = 1
+                print(f"INFO :: Adding increment 1 to mpm_event_notice line total: {msg_type_count['mpm_event_notice']}")
                 continue
             if re.search(nginx_log_1_rgx, line):
                 print(f"INFO :: Matched a line to analyze (1)...")
@@ -156,7 +167,7 @@ def main():
     # 
 
         # loop through the requests
-        for req in requests[client].keys():
+        for req in requestips[client].keys():
         #   skip empty requests (GET|HEAD requests with no path)
             if re.search(r"(?:GET|HEAD)\s*\/\s*", req):
                 continue
