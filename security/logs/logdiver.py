@@ -131,30 +131,52 @@ def main():
                 unmatched.append(line)
                 print(f"INFO :: Did not match a line to analyze...(count: {len(unmatched)})")
 
+    cprint(f"CLIENTS: ", 'yellow', end="")
+    print(f"({len(clients.keys())} unique clients)")
+    pp.pprint(clients)
+    cprint(f"REQUESTS: ", 'yellow', end="")
+    print(f"({len(requests.keys())} unique requests)")
+    pp.pprint(requests)
+    cprint(f"REQUESTIPS: ", 'yellow', end="")
+    print(f"({len(requestips.keys())} unique requester ips)")
+    pp.pprint(requestips)
+    cprint(f"UAIPS: ", 'yellow', end="")
+    print(f"({len(uaips.keys())} unique user-agents)")
+    pp.pprint(uaips)
+    cprint(f"UNMATCHED: ", 'red', end="")
+    print(f"({len(unmatched)} unmatched lines)")
+    pp.pprint(unmatched)
+    cprint(f"MSG_TYPE_COUNT: ", 'green')
+    pp.pprint(msg_type_count)
+
     # loop through clients looking up country-code/country-name for each IP address
+    for client in clients.keys():
     #   get country, organization, description, and owner
     # collect countries by hit count
     # 
 
-    # loop through the requests
-    #   skip empty requests (GET|HEAD requests with no path)
-    #   
+        # loop through the requests
+        for req in requests[client].keys():
+        #   skip empty requests (GET|HEAD requests with no path)
+            if re.search(r"(?:GET|HEAD)\s*\/\s*", req):
+                continue
+            if re.search(r"\%\w\w", req):
+                print(f"INFO :: Matched possible unicode(?) encoded request.")
+            elif re.search(r"\\x[0-9a-fA-F][0-9a-fA-F]", req):
+                print(f"INFO :: Matched possible hex encoded request.")
+            else:
+                print(f"INFO :: Matched a request that is either not encoded or encoding in unrecognized.")
+            print(f"{req}")
 
-    # loop through the user-agents
-    #   block any client IPs that have bot user-agents
-
-    cprint(f"CLIENTS: ", 'yellow')
-    pp.pprint(clients)
-    cprint(f"REQUESTS: ", 'yellow')
-    pp.pprint(requests)
-    cprint(f"REQUESTIPS: ", 'yellow')
-    pp.pprint(requestips)
-    cprint(f"UAIPS: ", 'yellow')
-    pp.pprint(uaips)
-    cprint(f"UNMATCHED: ", 'red')
-    pp.pprint(unmatched)
-    cprint(f"MSG_TYPE_COUNT: ", 'green')
-    pp.pprint(msg_type_count)
+        # loop through the user-agents
+        for ua in uaips[client].keys():
+            #   block any client IPs that have bot user-agents
+            if re.search(r"ZmEu", ua):
+                print(f"INFO :: BLOCK (ZmEu): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'")
+            elif re.search(r"masss?can", ua):
+                print(f"INFO :: BLOCK (masscan): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'")
+            else:
+                print(f"INFO :: Matched a user-agent that is either not recognized as a bot or is a bot we don't care about.")
 
 if __name__=='__main__':
     main()
