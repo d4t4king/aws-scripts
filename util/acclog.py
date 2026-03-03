@@ -119,7 +119,7 @@ def main():
                 outlines.extend(fp.readlines())
 
     # loop through the collection
-    print(f"INFO :: There are {len(outlines)} total lines colected.")
+    print(f"INFO :: There are {len(outlines)} total lines collected.")
     # write each uniqie log line to /tmp/access_log or the designated output file
     with open(args.output, 'w') as of:
         of.writelines(outlines)
