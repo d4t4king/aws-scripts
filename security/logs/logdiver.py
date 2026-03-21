@@ -93,7 +93,8 @@ def main():
                 print(f"INFO :: Adding increment 1 to no_fqdn_lo line total: {msg_type_count['no_fqdn_lo']}")
                 continue
             if re.search(nginx_log_1_rgx, line):
-                print(f"INFO :: Matched a line to analyze (regex 1)...")
+                if args.verbose: 
+                    print(f"INFO :: Matched a line to analyze (regex 1)...")
                 m = re.search(nginx_log_1_rgx, line)
                 if args.verbose:
                     print(f"INFO :: group1: {m.group(1)}, group2: {m.group(2)}, group3: {m.group(3)}, group4: {m.group(4)}, group5: {m.group(5)}") # pyright: ignore[reportOptionalMemberAccess]
@@ -156,21 +157,21 @@ def main():
 
     cprint(f"CLIENTS: ", 'yellow', end="")
     print(f"({len(clients.keys())} unique clients)")
-    pp.pprint(clients)
+    # pp.pprint(clients)
     cprint(f"REQUESTS: ", 'yellow', end="")
     print(f"({len(requests.keys())} unique requests)")
-    pp.pprint(requests)
+    # pp.pprint(requests)
     cprint(f"REQUESTIPS: ", 'yellow', end="")
     print(f"({len(requestips.keys())} unique requester ips)")
-    pp.pprint(requestips)
+    # pp.pprint(requestips)
     cprint(f"UAIPS: ", 'yellow', end="")
     print(f"({len(uaips.keys())} unique user-agents)")
-    pp.pprint(uaips)
+    # pp.pprint(uaips)
     cprint(f"UNMATCHED: ", 'red', end="")
     print(f"({len(unmatched)} unmatched lines)")
-    pp.pprint(unmatched)
+    # pp.pprint(unmatched)
     cprint(f"MSG_TYPE_COUNT: ", 'green')
-    pp.pprint(msg_type_count)
+    # pp.pprint(msg_type_count)
 
     # loop through clients looking up country-code/country-name for each IP address
     for client in clients.keys():
