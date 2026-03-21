@@ -50,6 +50,10 @@ def main():
     # 'AH00489: Apache/2.4.66 (Debian) configured -- resuming normal '
     # 'operations\n'
     mpm_event_notice_rgx = re.compile(r"\s+\[mpm_event:notice\]\s+")
+    # "AH00558: apache2: Could not reliably determine the server's fully "
+    # "qualified domain name, using 127.0.1.1. Set the 'ServerName' directive "
+    # 'globally to suppress this message\n'
+    no_fqdn_rgx = re.compile(r".*full qualified domain name,.+127\.0\.[01]\.1")
     # 52.169.14.74 - - [05/Aug/2025:14:59:04 +0000] "GET /y.php HTTP/1.1" 404 162 "-" "-"
     nginx_log_1_rgx = re.compile(r"((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*\-\s*.*?\s*\[(.*?)\]\s*\"(.*?)\"\s*(\d+)\s*\d+\s*\".*?\"\s*\"(.*?)\"")
     # logs should be http/apache/nginx access logs
@@ -81,8 +85,15 @@ def main():
                     msg_type_count['mpm_event_notice'] = 1
                 print(f"INFO :: Adding increment 1 to mpm_event_notice line total: {msg_type_count['mpm_event_notice']}")
                 continue
+            if re.search(no_fqdn_rgx, line):
+                if 'no_fqdn_lo' in msg_type_count.keys():
+                    msg_type_count['no_fqdn_lo'] += 1
+                else:
+                    msg_type_count['no_fqdn_lo'] = 1
+                print(f"INFO :: Adding increment 1 to no_fqdn_lo line total: {msg_type_count['no_fqdn_lo']}")
+                continue
             if re.search(nginx_log_1_rgx, line):
-                print(f"INFO :: Matched a line to analyze (1)...")
+                print(f"INFO :: Matched a line to analyze (regex 1)...")
                 m = re.search(nginx_log_1_rgx, line)
                 if args.verbose:
                     print(f"INFO :: group1: {m.group(1)}, group2: {m.group(2)}, group3: {m.group(3)}, group4: {m.group(4)}, group5: {m.group(5)}") # pyright: ignore[reportOptionalMemberAccess]
@@ -130,13 +141,14 @@ def main():
                 else:
                     requestips[clientip] = {request: 1}
                 #       user-agents per client
-                # uaips.setdefault(clientip, {})
-                # uaips[clientip][ua] = uaips[clientip].get(ua, 0) + 1
                 if clientip in uaips.keys():
                     if ua in uaips[clientip].keys():
                         uaips[clientip][ua] += 1
                     else:
                         uaips[clientip][ua] = 1
+                else:
+                    uaips[clientip] = {}
+                    uaips[clientip][ua] = 1
             else:
                 #   collect unmatched lines (presumably for processing later)
                 unmatched.append(line)
@@ -188,6 +200,7 @@ def main():
                 print(f"INFO :: BLOCK (masscan): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'")
             else:
                 print(f"INFO :: Matched a user-agent that is either not recognized as a bot or is a bot we don't care about.")
+                print(f"INFO :: client={client}, ua={ua}")
 
 if __name__=='__main__':
     main()
