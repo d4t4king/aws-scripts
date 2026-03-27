@@ -8,7 +8,12 @@ from termcolor import cprint
 import sys
 import os
 import json
-from urllib.request import urlopen
+### Use this for the default interface (URL only) for ipinfo -- this has usage limits.
+# from urllib.request import urlopen
+### ipinfo is a PITA to install in managed environments.  Go learn how to set up venv's
+#import ipinfo
+### Trying just a basic requests call
+import requests
 
 def parse_arguments():
     p = argparse.ArgumentParser()
@@ -20,29 +25,40 @@ def parse_arguments():
     p.add_argument('--iptables-path', dest='iptables_path', help='the path to the iptables binary') # This may not be required or used if we want to try the iptc library.
     p.add_argument('--iptables-outfile', dest='iptables_out', help='the output file to write to')
     p.add_argument('--iptables-err', dest='iptables_err', default='/tmp/iptables.err', help='the output file to write errors')
+    p.add_argument('-t', '--ipinfo-token', dest='ipinfo_token', help="The Bearer token to use with ipinfo api calls.")
     return p.parse_args()
 
-def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address):
+def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtoken: str) -> str:
     """
     Fetches the two-letter country code (e.g., 'US') for a given IP address using the ipinfo.io.api
     
     Note: Free tiers of APIs may have usage limits.
     """
+    pp = pprint.PrettyPrinter(indent=4)
     # An API URL - you can get a free token from the [IPinfo dashboard](https://ipinfo.io)
     # The [IP-API.com](http://ip-api.com/json/) service is another option that does not 
     # require a key for basic lookups.
-    url = f"https://ipinfo.io/{ipaddress}/json"
+    ### 
+    ### curl -H "Authorization: Bearer 8b81e369d29725" https://api.ipinfo.io/lite/8.8.8.8
+    url = f"https://api.ipinfo.io/lite/{ipaddress}"
+    #url = f"https://ipinfo.io/{ipaddress}/json"
 
     try:
-        with urlopen(url) as response:
-            response_content = response.read()
-            data = json.loads(response_content.decode('utf-8'))
+        headers = {
+            'Authroization': f"Bearer {authtoken}"
+        }
+        resp = requests.get(url, headers=headers)
+        pp.pprint(resp)
+        exit(0)
+        # with urlopen(url) as response:
+        #     response_content = response.read()
+        #     data = json.loads(response_content.decode('utf-8'))
             
-            # The country code is in the 'country' field of the JSON response
-            return data.get('country') 
+        #     # The country code is in the 'country' field of the JSON response
+        #     return data.get('country') 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return None
+        exit(1)
 
 def main():
     pp = pprint.PrettyPrinter(indent=4)
@@ -214,8 +230,16 @@ def main():
     for client in clients.keys():
     #   get country, organization, description, and owner
     # collect countries by hit count
-        cc = get_country_code_from_ip(client)
+        cc = get_country_code_from_ip(client, args.ipinfo_token)
         print(f"INFO :: CC: {client} -> {cc}")
+        if cc in countries.keys():
+            countries[cc] += 1
+        else:
+            countries[cc] = 1
+        if cc in client_ccs[client].keys():
+            client_ccs[client][cc] += 1
+        else:
+            client_ccs[client][cc] = 1
 
         # loop through the requests
         for req in requestips[client].keys():
