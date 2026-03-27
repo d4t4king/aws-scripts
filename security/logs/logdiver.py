@@ -92,14 +92,16 @@ def main():
                     msg_type_count['blank'] += 1
                 else:
                     msg_type_count['blank'] = 1
-                print(f"INFO :: Adding increment 1 to blank line total: {msg_type_count['blank']}")
+                if args.verbose:
+                    print(f"INFO :: Adding increment 1 to blank line total: {msg_type_count['blank']}")
                 continue
             if re.search(core_notice_rgx, line):
                 if 'core_notice' in msg_type_count.keys():
                     msg_type_count['core_notice'] += 1
                 else:
                     msg_type_count['core_notice'] = 1
-                print(f"INFO :: Adding increment 1 to core_notice line total: {msg_type_count['core_notice']}")
+                if args.verbose:
+                    print(f"INFO :: Adding increment 1 to core_notice line total: {msg_type_count['core_notice']}")
                 # This is mainly about service start and stop.  We don't really care about these messages.
                 continue
             if re.search(mpm_event_notice_rgx, line):
@@ -107,14 +109,16 @@ def main():
                     msg_type_count['mpm_event_notice'] += 1
                 else:
                     msg_type_count['mpm_event_notice'] = 1
-                print(f"INFO :: Adding increment 1 to mpm_event_notice line total: {msg_type_count['mpm_event_notice']}")
+                if args.verbose:
+                    print(f"INFO :: Adding increment 1 to mpm_event_notice line total: {msg_type_count['mpm_event_notice']}")
                 continue
             if re.search(no_fqdn_rgx, line):
                 if 'no_fqdn_lo' in msg_type_count.keys():
                     msg_type_count['no_fqdn_lo'] += 1
                 else:
                     msg_type_count['no_fqdn_lo'] = 1
-                print(f"INFO :: Adding increment 1 to no_fqdn_lo line total: {msg_type_count['no_fqdn_lo']}")
+                if args.verbose:
+                    print(f"INFO :: Adding increment 1 to no_fqdn_lo line total: {msg_type_count['no_fqdn_lo']}")
                 continue
             if re.search(nginx_log_1_rgx, line):
                 if args.verbose: 
