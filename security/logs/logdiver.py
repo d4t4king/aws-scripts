@@ -7,7 +7,8 @@ import ipaddress as IP
 from termcolor import cprint
 import sys
 import os
-
+import json
+from urllib.request import urlopen
 
 def parse_arguments():
     p = argparse.ArgumentParser()
@@ -20,6 +21,28 @@ def parse_arguments():
     p.add_argument('--iptables-outfile', dest='iptables_out', help='the output file to write to')
     p.add_argument('--iptables-err', dest='iptables_err', default='/tmp/iptables.err', help='the output file to write errors')
     return p.parse_args()
+
+def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address):
+    """
+    Fetches the two-letter country code (e.g., 'US') for a given IP address using the ipinfo.io.api
+    
+    Note: Free tiers of APIs may have usage limits.
+    """
+    # An API URL - you can get a free token from the [IPinfo dashboard](https://ipinfo.io)
+    # The [IP-API.com](http://ip-api.com/json/) service is another option that does not 
+    # require a key for basic lookups.
+    url = f"https://ipinfo.io/{ipaddress}/json"
+
+    try:
+        with urlopen(url) as response:
+            response_content = response.read()
+            data = json.loads(response_content.decode('utf-8'))
+            
+            # The country code is in the 'country' field of the JSON response
+            return data.get('country') 
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
 
 def main():
     pp = pprint.PrettyPrinter(indent=4)
@@ -171,7 +194,7 @@ def main():
     print(f"({len(unmatched)} unmatched lines)")
     # pp.pprint(unmatched)
     cprint(f"MSG_TYPE_COUNT: ", 'green')
-    # pp.pprint(msg_type_count)
+    pp.pprint(msg_type_count)
 
     # loop through clients looking up country-code/country-name for each IP address
     for client in clients.keys():
@@ -189,16 +212,21 @@ def main():
             elif re.search(r"\\x[0-9a-fA-F][0-9a-fA-F]", req):
                 print(f"INFO :: Matched possible hex encoded request.")
             else:
-                print(f"INFO :: Matched a request that is either not encoded or encoding in unrecognized.")
+                if args.verbose:
+                    print(f"INFO :: Matched a request that is either not encoded or encoding in unrecognized.")
             print(f"{req}")
 
         # loop through the user-agents
         for ua in uaips[client].keys():
             #   block any client IPs that have bot user-agents
             if re.search(r"ZmEu", ua):
-                print(f"INFO :: BLOCK (ZmEu): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'")
+                cprint(f"BLOCK :: BLOCK (ZmEu): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
             elif re.search(r"masss?can", ua):
-                print(f"INFO :: BLOCK (masscan): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'")
+                cprint(f"BLOCK :: BLOCK (masscan): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+            elif re.search(r"RavenX-Scanner\/1\.0", ua):
+                cprint(f"BLOCK :: BLOCK (RavenX-Scanner): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
+            elif re.search(r"AhrefsBot\/7\.0;", ua):
+                cprint(f"BLOCK :: BLOCK (AhrefsBot): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
             else:
                 print(f"INFO :: Matched a user-agent that is either not recognized as a bot or is a bot we don't care about.")
                 print(f"INFO :: client={client}, ua={ua}")
