@@ -176,7 +176,8 @@ def main():
             else:
                 #   collect unmatched lines (presumably for processing later)
                 unmatched.append(line)
-                print(f"INFO :: Did not match a line to analyze...(count: {len(unmatched)})")
+                if args.verbose:
+                    print(f"INFO :: Did not match a line to analyze...(count: {len(unmatched)})")
 
     cprint(f"CLIENTS: ", 'yellow', end="")
     print(f"({len(clients.keys())} unique clients)")
@@ -227,6 +228,8 @@ def main():
                 cprint(f"BLOCK :: BLOCK (RavenX-Scanner): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
             elif re.search(r"AhrefsBot\/7\.0;", ua):
                 cprint(f"BLOCK :: BLOCK (AhrefsBot): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
+            elif re.search(r"zgrab", "ua"):
+                cprint(f"BLOCK :: BLOCK (zgrab): {client} -> {ua} 'iptables -I -s {client} -j DROP'", "red")
             else:
                 #print(f"INFO :: Matched a user-agent that is either not recognized as a bot or is a bot we don't care about.")
                 print(f"INFO :: client={client}, ua={ua}")
