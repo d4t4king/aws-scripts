@@ -60,6 +60,7 @@ def main():
         print(f"INFO :: verbose: {args.verbose}, quiet: {args.quiet}, debug: {args.debug}, input_file: {args.input_file}, iptables_path: {args.iptables_path}, iptables_out: {args.iptables_out}, iptables_err: {args.iptables_err}")
 
     clients = {}
+    client_ccs = {}
     countries = {}
     requests = {}
     requestips = {}
@@ -213,7 +214,8 @@ def main():
     for client in clients.keys():
     #   get country, organization, description, and owner
     # collect countries by hit count
-    # 
+        cc = get_country_code_from_ip(client)
+        print(f"INFO :: CC: {client} -> {cc}")
 
         # loop through the requests
         for req in requestips[client].keys():
