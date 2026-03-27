@@ -220,7 +220,6 @@ def main():
                 print(f"INFO :: Matched possible unicode(?) encoded request.")
             elif re.search(r"\\x[0-9a-fA-F][0-9a-fA-F]", req):
                 print(f"INFO :: Matched possible hex encoded request.")
-                pp.pprint(req)
             else:
                 if args.verbose:
                     print(f"INFO :: Matched a request that is either not encoded or encoding in unrecognized.")
@@ -229,16 +228,33 @@ def main():
         # loop through the user-agents
         for ua in uaips[client].keys():
             #   block any client IPs that have bot user-agents
+            if re.search(r"Go-http-client", ua):
+                cprint(f"BLOCK :: DROP (language-clients): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
             if re.search(r"ZmEu", ua):
-                cprint(f"BLOCK :: BLOCK (ZmEu): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+                cprint(f"BLOCK :: DROP (ZmEu): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
             elif re.search(r"masss?can", ua):
-                cprint(f"BLOCK :: BLOCK (masscan): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+                cprint(f"BLOCK :: DROP (masscan): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
             elif re.search(r"RavenX-Scanner\/1\.0", ua):
-                cprint(f"BLOCK :: BLOCK (RavenX-Scanner): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
+                cprint(f"BLOCK :: DROP(RavenX-Scanner): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
             elif re.search(r"AhrefsBot\/7\.0;", ua):
-                cprint(f"BLOCK :: BLOCK (AhrefsBot): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
-            elif re.search(r"zgrab", "ua"):
-                cprint(f"BLOCK :: BLOCK (zgrab): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
+                cprint(f"BLOCK :: DROP (AhrefsBot): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+            elif re.search(r"zgrab", ua):
+                cprint(f"BLOCK :: DROP (zgrab): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+            elif re.search(r"SaaSBrowserBot", ua):
+                cprint(f"BLOCK :: DROP (SaaSBrowserBot): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+            elif re.search(r"MJ12bot", ua):
+                cprint(f"BLOCK :: DROP (MJ12bot): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+            elif re.search(r"Hello from Palo Alto Networks", ua):
+                # We don't care about them scanning, really, since they should mostly be legit.  So let's send them a reset 
+                # instead of just dropping the traffic.
+                cprint(f"BLOCK :: RESET (palo-alto scanner): {client} -> {ua} 'iptables -I INPUT 1 -p tcp --dport 443 -j REJECT --reject-with tcp-reset", "yellow")
+            elif re.search(r"silver\.inc", ua):
+                # This looks like it might be research so go ahead and RESET them for now.
+                cprint(f"BLOCK :: RESET (silver.inc) {client} -> {ua} 'iptables -i INPUT 1 -p tcp --dport 443 -j REJECT --reject-with tcp-reset'", "yellow")
+            elif re.search(r"Googlebot", ua):
+                cprint(f"BLOCK :: RESET (Googlebot) {client} -> {ua} 'iptables-i INPUT 1 -p tcp --dport 443 -j REJECT --reject-with tcp-reset'", "yellow")
+            elif re.search(r"CensysInspect", ua):
+                cprint(f"BLOCK :: RESET (Censys) {client} -> {ua} 'iptables-i INPUT 1 -p tcp --dport 443 -j REJECT --reject-with tcp-reset'", "yellow")
             else:
                 #print(f"INFO :: Matched a user-agent that is either not recognized as a bot or is a bot we don't care about.")
                 print(f"INFO :: client={client}, ua={ua}")
