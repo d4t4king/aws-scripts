@@ -63,6 +63,7 @@ def main():
     countries = {}
     requests = {}
     requestips = {}
+    useragents = {}
     uaips = {}
     unmatched = []
     msg_type_count = {}
@@ -164,6 +165,10 @@ def main():
                         requestips[clientip][request] = 1
                 else:
                     requestips[clientip] = {request: 1}
+                if ua in useragents.keys():
+                    useragents[ua] += 1
+                else:
+                    useragents[ua] = 1
                 #       user-agents per client
                 if clientip in uaips.keys():
                     if ua in uaips[clientip].keys():
@@ -188,6 +193,9 @@ def main():
     cprint(f"REQUESTIPS: ", 'yellow', end="")
     print(f"({len(requestips.keys())} unique requester ips)")
     # pp.pprint(requestips)
+    cprint(f"USERAGENTS: ", "yellow", end="")
+    print(f"({len(useragents)} unique uner-agents)")
+    # pp.pprint(useragents)
     cprint(f"UAIPS: ", 'yellow', end="")
     print(f"({len(uaips.keys())} unique user-agents)")
     # pp.pprint(uaips)
@@ -212,6 +220,7 @@ def main():
                 print(f"INFO :: Matched possible unicode(?) encoded request.")
             elif re.search(r"\\x[0-9a-fA-F][0-9a-fA-F]", req):
                 print(f"INFO :: Matched possible hex encoded request.")
+                pp.pprint(req)
             else:
                 if args.verbose:
                     print(f"INFO :: Matched a request that is either not encoded or encoding in unrecognized.")
