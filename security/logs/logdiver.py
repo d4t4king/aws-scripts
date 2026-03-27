@@ -238,7 +238,7 @@ def main():
             elif re.search(r"AhrefsBot\/7\.0;", ua):
                 cprint(f"BLOCK :: BLOCK (AhrefsBot): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
             elif re.search(r"zgrab", "ua"):
-                cprint(f"BLOCK :: BLOCK (zgrab): {client} -> {ua} 'iptables -I -s {client} -j DROP'", "red")
+                cprint(f"BLOCK :: BLOCK (zgrab): {client} -> {ua} 'iptables -I INPUT -s {client} -j DROP'", "red")
             else:
                 #print(f"INFO :: Matched a user-agent that is either not recognized as a bot or is a bot we don't care about.")
                 print(f"INFO :: client={client}, ua={ua}")
