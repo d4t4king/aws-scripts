@@ -49,7 +49,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
             'Content-Type': 'application/json'
         }
         resp = requests.get(url, headers=headers)
-        pp.pprint(json.dumps(resp.json))
+        pp.pprint(json.dumps(resp.json()))
         # pp.pprint(resp.content)
         exit(0)
         # with urlopen(url) as response:
