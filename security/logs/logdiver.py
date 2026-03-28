@@ -39,7 +39,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
     # The [IP-API.com](http://ip-api.com/json/) service is another option that does not 
     # require a key for basic lookups.
     ### 
-    ### curl -H "Authorization: Bearer 8b81e369d29725" https://api.ipinfo.io/lite/8.8.8.8
+    ### curl -H "Authorization: Bearer XXXXXXXXXXXXXX" https://api.ipinfo.io/lite/8.8.8.8
     url = f"https://api.ipinfo.io/lite/{ipaddress}"
     #url = f"https://ipinfo.io/{ipaddress}/json"
 
