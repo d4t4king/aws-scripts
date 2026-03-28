@@ -50,10 +50,11 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
         }
         resp = requests.get(url, headers=headers)
         r_json = json.dumps(resp.json())
+        pp.pprint(r_json)
         # pp.pprint(json.dumps(resp.json()))
         # pp.pprint(resp.content)
-        pp.pprint(r_json)
-        # return r_json['country_code']
+        # pp.pprint(r_json)
+        # return str(r_json[0]['country_code'])
         # exit(0)
         # with urlopen(url) as response:
         #     response_content = response.read()
@@ -64,6 +65,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
     except Exception as e:
         print(f"An error occurred: {e}")
         exit(1)
+    return r_json
 
 def main():
     pp = pprint.PrettyPrinter(indent=4)
