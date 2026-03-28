@@ -45,7 +45,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
 
     try:
         headers = {
-            'Authroization': f"Bearer {authtoken}",
+            'Authorization': f"Bearer {authtoken}",
             'Content-Type': 'application/json'
         }
         resp = requests.get(url, headers=headers)
