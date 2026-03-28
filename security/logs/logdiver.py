@@ -49,9 +49,10 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
             'Content-Type': 'application/json'
         }
         resp = requests.get(url, headers=headers)
-        r_json = resp.json().decode("utf-8")
-        print(f"INFO :: r_json is of type {str(type(r_json))}")
-        pp.pprint(r_json)
+        #r_json = resp.json().decode("utf-8")
+        r_json = resp.json()
+        #print(f"INFO :: r_json is of type {str(type(r_json))}")
+        #pp.pprint(r_json)
         # pp.pprint(json.dumps(resp.json()))
         # pp.pprint(resp.content)
         # pp.pprint(r_json)
@@ -66,7 +67,13 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
     except Exception as e:
         print(f"An error occurred: {e}")
         exit(1)
-    return r_json
+    if 'country_code' in r_json.keys():
+        return r_json['country_code']
+    else:
+        if "127.0.0." in ipaddress:
+            return "LOC"
+        else:
+            return "UNK"
 
 def main():
     pp = pprint.PrettyPrinter(indent=4)
@@ -244,9 +251,13 @@ def main():
             countries[cc] += 1
         else:
             countries[cc] = 1
-        if cc in client_ccs[client].keys():
-            client_ccs[client][cc] += 1
+        if client in client_ccs:
+            if cc in client_ccs[client].keys():
+                client_ccs[client][cc] += 1
+            else:
+                client_ccs[client][cc] = 1
         else:
+            client_ccs[client] = {}
             client_ccs[client][cc] = 1
 
         # loop through the requests
