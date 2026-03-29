@@ -256,10 +256,11 @@ def main():
                 print(f"INFO :: Matched possible unicode(?) encoded request.")
             elif re.search(r"\\x[0-9a-fA-F][0-9a-fA-F]", req):
                 print(f"INFO :: Matched possible hex encoded request.")
+                b_req = req.encode("utf-8")
                 ascii_decoded = req.decode('ascii')
                 print(f"ASCII decoded: {ascii_decoded}")
-                utf_decoded = req.decode('utf-8')
-                print(f"UTF-8 Decoded: {utf_decoded}")
+                # utf_decoded = req.decode('utf-8')
+                # print(f"UTF-8 Decoded: {utf_decoded}")
             else:
                 if args.verbose:
                     print(f"INFO :: Matched a request that is either not encoded or encoding in unrecognized.")
