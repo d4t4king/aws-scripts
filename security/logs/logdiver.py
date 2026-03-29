@@ -35,6 +35,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
     Note: Free tiers of APIs may have usage limits.
     """
     pp = pprint.PrettyPrinter(indent=4)
+    print(f"INFO :: ipaddress is of type {str(type(ipaddress))}")
     local_link = IP.ip_network("127.0.0.0/8")
     # An API URL - you can get a free token from the [IPinfo dashboard](https://ipinfo.io)
     # The [IP-API.com](http://ip-api.com/json/) service is another option that does not 
