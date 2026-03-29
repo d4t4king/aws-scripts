@@ -58,7 +58,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
     if 'country_code' in r_json.keys():
         return r_json['country_code']
     else:
-        if ipaddress in local_link:
+        if IP.ip_address(ipaddress) in local_link:
             return "LOC"
         else:
             return "UNK"
