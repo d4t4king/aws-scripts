@@ -35,6 +35,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
     Note: Free tiers of APIs may have usage limits.
     """
     pp = pprint.PrettyPrinter(indent=4)
+    local_link = IP.ip_network("127.0.0.0/8")
     # An API URL - you can get a free token from the [IPinfo dashboard](https://ipinfo.io)
     # The [IP-API.com](http://ip-api.com/json/) service is another option that does not 
     # require a key for basic lookups.
@@ -49,28 +50,14 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
             'Content-Type': 'application/json'
         }
         resp = requests.get(url, headers=headers)
-        #r_json = resp.json().decode("utf-8")
         r_json = resp.json()
-        #print(f"INFO :: r_json is of type {str(type(r_json))}")
-        #pp.pprint(r_json)
-        # pp.pprint(json.dumps(resp.json()))
-        # pp.pprint(resp.content)
-        # pp.pprint(r_json)
-        # return str(r_json[0]['country_code'])
-        # exit(0)
-        # with urlopen(url) as response:
-        #     response_content = response.read()
-        #     data = json.loads(response_content.decode('utf-8'))
-            
-        #     # The country code is in the 'country' field of the JSON response
-        #     return data.get('country') 
     except Exception as e:
         print(f"An error occurred: {e}")
         exit(1)
     if 'country_code' in r_json.keys():
         return r_json['country_code']
     else:
-        if "127.0.0." in ipaddress:
+        if ipaddress in local_link:
             return "LOC"
         else:
             return "UNK"
@@ -269,6 +256,10 @@ def main():
                 print(f"INFO :: Matched possible unicode(?) encoded request.")
             elif re.search(r"\\x[0-9a-fA-F][0-9a-fA-F]", req):
                 print(f"INFO :: Matched possible hex encoded request.")
+                ascii_decoded = req.decode('ascii')
+                print(f"ASCII decoded: {ascii_decoded}")
+                utf_decoded = req.decode('utf-8')
+                print(f"UTF-8 Decoded: {utf_decoded}")
             else:
                 if args.verbose:
                     print(f"INFO :: Matched a request that is either not encoded or encoding in unrecognized.")
@@ -293,6 +284,8 @@ def main():
                 cprint(f"BLOCK :: DROP (SaaSBrowserBot): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
             elif re.search(r"MJ12bot", ua):
                 cprint(f"BLOCK :: DROP (MJ12bot): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
+            elif re.search(r"BitSightBot", ua):
+                cprint(f"BLOCK :: DROP (BitSightBot): {client} -> {ua} 'iptables -I INPUT 1 -s {client} -j DROP'", "red")
             elif re.search(r"Hello from Palo Alto Networks", ua):
                 # We don't care about them scanning, really, since they should mostly be legit.  So let's send them a reset 
                 # instead of just dropping the traffic.
