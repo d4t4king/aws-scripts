@@ -64,6 +64,7 @@ def get_country_code_from_ip(ipaddress: IP.IPv4Address | IP.IPv6Address, authtok
             return "UNK"
 
 def main():
+    #region Script Setup
     pp = pprint.PrettyPrinter(indent=4)
 
     args = parse_arguments()
@@ -77,7 +78,8 @@ def main():
 
     if args.verbose:
         print(f"INFO :: verbose: {args.verbose}, quiet: {args.quiet}, debug: {args.debug}, input_file: {args.input_file}, iptables_path: {args.iptables_path}, iptables_out: {args.iptables_out}, iptables_err: {args.iptables_err}")
-
+    #endregion
+    
     clients = {}
     client_ccs = {}
     countries = {}
