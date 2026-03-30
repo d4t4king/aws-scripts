@@ -275,6 +275,10 @@ def main():
             if re.search(r"\%\w\w", req):
                 print(f"INFO :: Matched possible unicode(?) encoded request.")
             elif re.search(r"\\x[0-9a-fA-F][0-9a-fA-F]", req):
+                _m = re.split(r"\b(\\x[0-9a-fA-F][0-9a-fA-F])\b", req, maxsplit=0, flags=0)
+                print(f"INFO :: _m is of type ({str(type(_m))})")
+                print(f"INFO :: length of _m is {len(_m)}")
+                exit(1)
                 print(f"INFO :: Matched possible hex encoded request.")
                 decoded = urllib.parse.unquote(req)
                 print(f"INFO :: decoded str: {decoded}")
