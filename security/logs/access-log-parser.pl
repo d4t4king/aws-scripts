@@ -72,11 +72,11 @@ foreach my $c ( ipv4sort keys %clients ) {
 	my $cn = $gi->country_name_by_addr($c);
 	$countries{$cn}++;
 	if ((!defined($org)) || ($org eq "")) { $org = "NOT DEFINED"; }
-		if ($nocolor) {
-			print "$c \t :: $country :: $cc :: ";
-		} else {
-			print color 'green'; print "$c"; print color 'reset'; print "\t :: $country :: $cc :: "; print color 'yellow'; print "$cn"; print color 'reset';
-		}
+	if ($nocolor) {
+		print "$c \t :: $country :: $cc :: ";
+	} else {
+		print color 'green'; print "$c"; print color 'reset'; print "\t :: $country :: $cc :: "; print color 'yellow'; print "$cn"; print color 'reset';
+	}
 	if (length($cn) > 16) { 
 		if ($nocolor) {
 			print "\t:: $org ( ".join(" ", keys(%{$uaips{$c}}))." ) \n";
