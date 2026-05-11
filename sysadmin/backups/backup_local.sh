@@ -7,9 +7,11 @@ echo $DATE
 HOSTNAME=$(hostname -f)
 
 echo $HOSTNAME
-if [ $HOSTNAME == "mercury.dataking.us" ]; then
-	/usr/local/bin/pd3000 "Starting $1 backup..."
-fi
+# This host doesn't exist any more, but I do still have the pd3000, so I don't want to lose
+# this code.  (The binary will likely need to be compiled again, for whatever platform it is run on at that time.)
+# if [ $HOSTNAME == "mercury.dataking.us" ]; then
+# 	/usr/local/bin/pd3000 "Starting $1 backup..."
+# fi
 if [ "${1}x" == "homex" ]; then
 	TARBALL="/tmp/home_${DATE}_${HOSTNAME}.tar.xz"
 	echo $TARBALL
@@ -36,23 +38,23 @@ else
 	fi
 fi
 
-if [ "${HOSTNAME}" == "mercury.dataking.us" ]; then
-	/usr/local/bin/pd3000 "Backup complete." "Copying to storage..."
-fi
-if [ "${HOSTNAME}" == "jupiter.dataking.us" -o "${HOSTNAME}" == "neptune.dataking.us" ]; then
-	scp ${TARBALL} 192.168.100.5:/opt/backups/${HOSTNAME}/
-elif [ "${HOSTNAME}" == "luna" ]; then
-	scp ${TARBALL} oortcloud:/opt/backups/${HOSTNAME}.dataking.us/
-elif [ "${HOSTNAME}" == "oortcloud.dataking.us" ]; then
-	cp -vf ${TARBALL} /opt/backups/${HOSTNAME}/
-else
-	scp ${TARBALL} 192.168.1.61:/opt/backups/${HOSTNAME}/
-fi
+# if [ "${HOSTNAME}" == "mercury.dataking.us" ]; then
+# 	/usr/local/bin/pd3000 "Backup complete." "Copying to storage..."
+# fi
+# if [ "${HOSTNAME}" == "jupiter.dataking.us" -o "${HOSTNAME}" == "neptune.dataking.us" ]; then
+# 	scp ${TARBALL} 192.168.100.5:/opt/backups/${HOSTNAME}/
+# elif [ "${HOSTNAME}" == "luna" ]; then
+# 	scp ${TARBALL} oortcloud:/opt/backups/${HOSTNAME}.dataking.us/
+# elif [ "${HOSTNAME}" == "oortcloud.dataking.us" ]; then
+# 	cp -vf ${TARBALL} /opt/backups/${HOSTNAME}/
+# else
+# 	scp ${TARBALL} 192.168.1.61:/opt/backups/${HOSTNAME}/
+# fi
 if [ $? == 0 ]; then
 	rm -vf ${TARBALL}
 else 
 	echo "Error during copy.  Skipping remove."
 fi
-if [ $HOSTNAME == "mercury.dataking.us" ]; then
-	/usr/local/bin/pd3000 "$1 backup on " "${HOSTNAME} compelte."
-fi
+# if [ $HOSTNAME == "mercury.dataking.us" ]; then
+# 	/usr/local/bin/pd3000 "$1 backup on " "${HOSTNAME} compelte."
+# fi
