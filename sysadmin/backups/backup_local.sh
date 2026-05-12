@@ -53,7 +53,7 @@ fi
 if [ $? == 0 ]; then
 	rm -vf ${TARBALL}
 else 
-	echo "Error during copy.  Skipping remove."
+	echo "Error during copy (rc: $?).  Skipping remove."
 fi
 # if [ $HOSTNAME == "mercury.dataking.us" ]; then
 # 	/usr/local/bin/pd3000 "$1 backup on " "${HOSTNAME} compelte."
